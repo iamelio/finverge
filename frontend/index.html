@@ -1,0 +1,265 @@
+<!-- Save as loan-frontend.html -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Online Loan Application — Demo Frontend</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- LEFT: Main app -->
+    <div class="panel" id="mainPanel">
+      <header class="app-header">
+        <div style="width:56px;height:56px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:white;font-weight:700">F</div>
+        <div>
+          <h1>Finverge — Online Loan App (Demo)</h1>
+          <div class="muted">User-facing portal — registration, apply, track status</div>
+        </div>
+      </header>
+
+      <nav id="navTabs" aria-label="Main navigation">
+        <button class="tab active" data-tab="home">Home</button>
+        <button class="tab" data-tab="register">Register</button>
+        <button class="tab" data-tab="login">Login</button>
+        <button class="tab" data-tab="apply">Apply for Loan</button>
+        <button class="tab" data-tab="status">My Applications</button>
+        <button class="tab" data-tab="admin">Admin</button>
+      </nav>
+
+      <main id="content" style="margin-top:16px">
+        <!-- Home -->
+        <section data-page="home">
+          <div class="tile" style="display:flex;gap:12px;align-items:center;justify-content:space-between">
+            <div>
+              <div class="small">Welcome to</div>
+              <div class="big">Finverge Demo Loan Portal</div>
+              <div class="muted" style="margin-top:6px">Apply online, track your application, and administrators can review applications on the Admin tab.</div>
+            </div>
+            <div class="right">
+              <button class="btn" onclick="navigateTo('apply')">Apply Now</button>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="tile">
+              <div class="small">Why this system?</div>
+              <ul style="margin:8px 0 0 18px;color:var(--muted);font-size:13px">
+                <li>Replace paper-based loan intake</li>
+                <li>Faster decision previews</li>
+                <li>Admin review & status tracking</li>
+              </ul>
+            </div>
+            <div class="tile">
+              <div class="small">Demo notes</div>
+              <div class="muted-small" style="margin-top:8px">
+                This demo stores data locally in your browser (localStorage). To connect to a real backend replace the localStorage calls with API requests to your server.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Register -->
+        <section data-page="register" style="display:none">
+          <h3>Create an account</h3>
+          <form id="registerForm" onsubmit="return false">
+            <div class="row">
+              <div class="col">
+                <label>Full name</label>
+                <input id="reg-name" type="text" placeholder="Jane Doe" required>
+              </div>
+              <div class="col">
+                <label>Email</label>
+                <input id="reg-email" type="email" placeholder="jane@example.com" required>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col">
+                <label>Phone</label>
+                <input id="reg-phone" type="text" placeholder="+234 801 000 0000">
+              </div>
+              <div class="col">
+                <label>Password</label>
+                <input id="reg-password" type="password" placeholder="Choose a strong password" required>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn ghost" onclick="navigateTo('home')">Cancel</button>
+              <button class="btn" onclick="handleRegister()">Create account</button>
+            </div>
+            <div id="regError" class="error" style="display:none"></div>
+          </form>
+        </section>
+
+        <!-- Login -->
+        <section data-page="login" style="display:none">
+          <h3>Login</h3>
+          <form id="loginForm" onsubmit="return false">
+            <div class="row">
+              <div class="col">
+                <label>Email</label>
+                <input id="login-email" type="email" placeholder="you@example.com">
+              </div>
+              <div class="col">
+                <label>Password</label>
+                <input id="login-password" type="password" placeholder="password">
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn ghost" onclick="navigateTo('home')">Cancel</button>
+              <button class="btn" onclick="handleLogin()">Login</button>
+            </div>
+            <div id="loginError" class="error" style="display:none"></div>
+          </form>
+
+          <div style="margin-top:12px" class="muted-small">
+            Demo admin: <strong>admin@finverge.demo</strong> / <strong>admin123</strong>
+          </div>
+        </section>
+
+        <!-- Apply -->
+        <section data-page="apply" style="display:none">
+          <h3>Loan application</h3>
+          <div class="muted-small" style="margin-bottom:8px">You must be logged in to submit an application. Use Register / Login above.</div>
+
+          <form id="applyForm" onsubmit="return false">
+            <div class="row">
+              <div class="col">
+                <label>Loan amount (₦)</label>
+                <input id="loan-amount" type="number" min="10000" step="1000" placeholder="500000">
+              </div>
+              <div class="col">
+                <label>Tenure (months)</label>
+                <select id="loan-tenure">
+                  <option value="6">6</option>
+                  <option value="12" selected>12</option>
+                  <option value="24">24</option>
+                  <option value="36">36</option>
+                  <option value="48">48</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col">
+                <label>Monthly net income (₦)</label>
+                <input id="loan-income" type="number" min="0" step="100" placeholder="150000">
+              </div>
+              <div class="col">
+                <label>Employment status</label>
+                <select id="loan-employment">
+                  <option value="employed">Employed</option>
+                  <option value="self">Self-employed</option>
+                  <option value="student">Student</option>
+                  <option value="unemployed">Unemployed</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col">
+                <label>Purpose</label>
+                <select id="loan-purpose">
+                  <option value="personal">Personal</option>
+                  <option value="business">Business</option>
+                  <option value="education">Education</option>
+                  <option value="medical">Medical</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="col">
+                <label>Collateral (optional)</label>
+                <input id="loan-collateral" type="text" placeholder="Car, Laptop, etc.">
+              </div>
+            </div>
+
+            <div style="margin-top:8px">
+              <label>Short note (how funds will be used)</label>
+              <textarea id="loan-notes" placeholder="Optional"></textarea>
+            </div>
+
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+              <button class="btn ghost" onclick="navigateTo('home')">Cancel</button>
+              <button class="btn" onclick="handleApply()">Preview & Submit</button>
+            </div>
+            <div id="applyError" class="error" style="display:none"></div>
+          </form>
+        </section>
+
+        <!-- My Applications -->
+        <section data-page="status" style="display:none">
+          <h3>My applications</h3>
+          <div id="myAppsArea" style="margin-top:8px"></div>
+        </section>
+
+        <!-- Admin -->
+        <section data-page="admin" style="display:none">
+          <h3>Admin dashboard</h3>
+          <div class="muted-small" style="margin-bottom:8px">Login as Admin to review applications (demo admin credentials above).</div>
+
+          <div id="adminLoginArea">
+            <form id="adminLogin" onsubmit="return false">
+              <div class="row">
+                <div class="col">
+                  <label>Admin email</label>
+                  <input id="admin-email" type="email" value="">
+                </div>
+                <div class="col">
+                  <label>Admin password</label>
+                  <input id="admin-password" type="password" value="">
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+                <button class="btn" onclick="handleAdminLogin()">Admin login</button>
+              </div>
+              <div id="adminLoginError" class="error" style="display:none"></div>
+            </form>
+          </div>
+
+          <div id="adminArea" style="display:none;margin-top:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div class="muted-small">Applications</div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <button class="btn ghost" onclick="adminLogout()">Logout</button>
+                <button class="btn" onclick="exportAllCSV()">Export CSV</button>
+              </div>
+            </div>
+
+            <div id="adminTableArea" style="margin-top:12px"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- RIGHT: Summary / Quick preview -->
+    <aside class="panel">
+      <div class="tile">
+        <div class="small">Quick preview</div>
+        <div id="quickLoanAmount" class="big">₦0</div>
+        <div class="muted-small" id="quickRepay">Enter loan amount & tenure</div>
+      </div>
+
+      <div class="tile" style="margin-top:12px">
+        <div class="small">Eligibility preview</div>
+        <div id="quickElig" style="margin-top:8px" class="muted-small">Not checked</div>
+      </div>
+
+      <div style="margin-top:12px" class="muted-small">
+        <div><strong>Project scope</strong></div>
+        <ul style="margin:8px 0 0 18px;color:var(--muted);font-size:13px">
+          <li>Frontend: HTML/CSS/JS</li>
+          <li>Local demo persistence with localStorage</li>
+          <li>Replace localStorage calls with API calls to integrate backend</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+
+<script src="app.js" defer></script>
+</body>
+</html>
