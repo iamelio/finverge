@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Environment files
+.env
+.env.*
+backend/.env
+backend/.env.*
+frontend/.env
+
+# Logs
+*.log
+logs/
+
+# SQLite database files
+backend/data/*.db
+backend/data/*.db-*
+backend/data/*.sqlite
+
+# Build & coverage outputs
+dist/
+build/
+coverage/
+backend/coverage/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
