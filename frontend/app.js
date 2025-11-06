@@ -1,37 +1,40 @@
 /* ------------------------------------------------------
-   Finverge demo frontend wired to Node/Express backend
-   - Makes authenticated fetch calls (cookies) to /api
-   - Keeps UI state in-memory instead of localStorage
-   - Still offers quick eligibility preview client-side
-   ------------------------------------------------------ */
+   Finverge Lending Hub — Frontend orchestration layer
+   - Token-aware fetch wrapper (JWT in Authorization header)
+   - Responsive UI updates for borrowers & administrators
+   - Modal experience for deep loan reviews
+------------------------------------------------------- */
 
 const API_BASE = window.API_BASE_URL || 'http://localhost:4000/api';
+const TOKEN_STORAGE_KEY = 'loan_app_token_v1';
+const LAST_TAB_KEY = 'loan_app_last_tab';
 
 const state = {
+  authToken: null,
   user: null,
   myApplications: [],
   adminApplications: [],
   adminOverview: null,
-  adminEvents: [],
 };
 
 const $ = (id) => document.getElementById(id);
 const qs = (selector) => document.querySelector(selector);
 const qsa = (selector) => Array.from(document.querySelectorAll(selector));
 
-const navButtons = qsa('nav .tab');
-const pageSections = qsa('main section');
+const pageSections = qsa('[data-page]');
 
 function setActiveTab(tab) {
   pageSections.forEach((section) => {
-    section.style.display = section.dataset.page === tab ? 'block' : 'none';
+    const isActive = section.dataset.page === tab;
+    section.style.display = isActive ? 'block' : 'none';
   });
-  navButtons.forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.tab === tab);
-  });
-  localStorage.setItem('loan_app_last_tab', tab);
-  if (tab === 'status') void loadMyApplications();
-  if (tab === 'admin') void loadAdminData();
+  localStorage.setItem(LAST_TAB_KEY, tab);
+  if (tab === 'status') {
+    void loadMyApplications();
+  }
+  if (tab === 'admin') {
+    void loadAdminData();
+  }
 }
 
 function navigateTo(tab) {
@@ -39,22 +42,47 @@ function navigateTo(tab) {
 }
 window.navigateTo = navigateTo;
 
-navButtons.forEach((btn) => {
-  btn.addEventListener('click', () => setActiveTab(btn.dataset.tab));
-});
-
-function showError(id, message) {
-  const el = $(id);
-  if (!el) return;
-  el.innerText = message;
-  el.style.display = 'block';
+function showToast(message, type = 'success') {
+  const toastEl = $('toast');
+  const toastBody = toastEl.querySelector('.toast-body');
+  toastBody.textContent = message;
+  const toast = new bootstrap.Toast(toastEl);
+  toast.show();
 }
 
-function clearError(id) {
-  const el = $(id);
-  if (!el) return;
-  el.innerText = '';
-  el.style.display = 'none';
+function setAuthToken(token) {
+  state.authToken = token || null;
+  if (token) {
+    localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  } else {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+  }
+}
+
+function hydrateAuthToken() {
+  const stored = localStorage.getItem(TOKEN_STORAGE_KEY);
+  state.authToken = stored || null;
+}
+
+function mapRole(role) {
+  return role === 'admin' ? 'Administrator' : 'Borrower';
+}
+
+function renderUserStatus() {
+  const userBadge = $('userBadge');
+  const userActions = $('userActions');
+  const userName = $('userName');
+  const userRole = $('userRole');
+
+  if (!state.user) {
+    userBadge.classList.add('d-none');
+    userActions.classList.remove('d-none');
+  } else {
+    userBadge.classList.remove('d-none');
+    userActions.classList.add('d-none');
+    userName.textContent = state.user.name || state.user.email;
+    userRole.textContent = mapRole(state.user.role);
+  }
 }
 
 async function apiFetch(path, { method = 'GET', body, headers = {} } = {}) {
@@ -64,30 +92,35 @@ async function apiFetch(path, { method = 'GET', body, headers = {} } = {}) {
     headers: { ...headers },
   };
   if (body !== undefined && body !== null) {
-    if (!(body instanceof FormData)) {
+    if (body instanceof FormData) {
+      opts.body = body;
+    } else {
       opts.headers['Content-Type'] = 'application/json';
       opts.body = JSON.stringify(body);
-    } else {
-      opts.body = body;
     }
+  }
+  if (state.authToken) {
+    opts.headers.Authorization = `Bearer ${state.authToken}`;
   }
   let res;
   try {
     res = await fetch(`${API_BASE}${path}`, opts);
   } catch (err) {
-    const message = err && err.message ? err.message : 'Network error';
-    throw new Error(`Network request failed (${message}). Check that the API server is running and reachable.`);
+    throw new Error(`Network request failed (${err.message}). Check that the API server is running.`);
   }
   const text = await res.text();
   let data = null;
   if (text) {
-    try { data = JSON.parse(text); } catch (_err) { data = null; }
+    try {
+      data = JSON.parse(text);
+    } catch (_err) {
+      data = null;
+    }
   }
   if (!res.ok) {
-    const message = data && data.message ? data.message : `Request failed (${res.status})`;
-    const error = new Error(message);
+    const error = new Error(data?.message || `Request failed (${res.status})`);
     error.status = res.status;
-    error.details = data && data.details ? data.details : undefined;
+    error.details = data?.details;
     throw error;
   }
   return data || {};
@@ -97,15 +130,196 @@ async function fetchSession() {
   try {
     const { user } = await apiFetch('/auth/me');
     state.user = user;
-  } catch (_err) {
-    state.user = null;
+  } catch (err) {
+    if (err.status === 401) {
+      state.user = null;
+      if (state.authToken) {
+        setAuthToken(null);
+      }
+    } else {
+      console.error(err);
+    }
+  }
+  renderUserStatus();
+}
+
+async function handleRegister() {
+  const form = $('registerForm');
+  const errorEl = $('regError');
+  errorEl.style.display = 'none';
+
+  const payload = {
+    name: form.querySelector('#reg-name').value.trim(),
+    email: form.querySelector('#reg-email').value.trim().toLowerCase(),
+    phone: form.querySelector('#reg-phone').value.trim(),
+    password: form.querySelector('#reg-password').value,
+    accountType: form.querySelector('input[name="role"]:checked').value || 'user',
+  };
+
+  if (!payload.name || !payload.email || !payload.password) {
+    errorEl.textContent = 'Please complete all required fields.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    const { user, token } = await apiFetch('/auth/register', { method: 'POST', body: payload });
+    if (token) {
+      setAuthToken(token);
+    }
+    state.user = user;
+    renderUserStatus();
+    form.reset();
+    showToast('Registration successful. You are signed in.', 'success');
+    if (user.role === 'admin') {
+      navigateTo('admin');
+    } else {
+      navigateTo('apply');
+    }
+  } catch (err) {
+    errorEl.textContent = err.message || 'Registration failed';
+    errorEl.style.display = 'block';
   }
 }
+window.handleRegister = handleRegister;
+
+async function handleLogin() {
+  const form = $('loginForm');
+  const errorEl = $('loginError');
+  errorEl.style.display = 'none';
+
+  const payload = {
+    email: form.querySelector('#login-email').value.trim().toLowerCase(),
+    password: form.querySelector('#login-password').value,
+  };
+
+  try {
+    const { user, token } = await apiFetch('/auth/login', { method: 'POST', body: payload });
+    if (token) {
+      setAuthToken(token);
+    }
+    state.user = user;
+    renderUserStatus();
+    form.reset();
+    showToast('Logged in successfully.', 'success');
+    if (user.role === 'admin') {
+      navigateTo('admin');
+    } else {
+      navigateTo('apply');
+    }
+  } catch (err) {
+    errorEl.textContent = err.message || 'Login failed';
+    errorEl.style.display = 'block';
+  }
+}
+window.handleLogin = handleLogin;
+
+async function handleLogout() {
+  try {
+    await apiFetch('/auth/logout', { method: 'POST' });
+  } catch (_err) {
+    // Ignore logout failures
+  }
+  setAuthToken(null);
+  state.user = null;
+  renderUserStatus();
+  showToast('Signed out.', 'success');
+  navigateTo('home');
+}
+window.handleLogout = handleLogout;
+
+function nextStep(step) {
+  const currentStep = step - 1;
+  const form = $('applyForm');
+  const currentStepEl = $(`step${currentStep}`);
+  const inputs = qsa(`#step${currentStep} input, #step${currentStep} select`);
+  let isValid = true;
+  for (const input of inputs) {
+    if (!input.checkValidity()) {
+      isValid = false;
+      input.classList.add('is-invalid');
+    } else {
+      input.classList.remove('is-invalid');
+    }
+  }
+
+  if (isValid) {
+    currentStepEl.style.display = 'none';
+    $(`step${step}`).style.display = 'block';
+  }
+
+  if (step === 4) {
+    updateReviewSummary();
+  }
+}
+window.nextStep = nextStep;
+
+function prevStep(step) {
+  const currentStep = step + 1;
+  $(`step${currentStep}`).style.display = 'none';
+  $(`step${step}`).style.display = 'block';
+}
+window.prevStep = prevStep;
+
+function updateReviewSummary() {
+  const name = $('apply-name').value;
+  const email = $('apply-email').value;
+  const income = $('loan-income').value;
+  const employment = $('loan-employment').value;
+  const amount = $('loan-amount').value;
+  const tenure = $('loan-tenure').value;
+  const purpose = $('loan-purpose').value;
+
+  const summary = `
+    <dl class="row">
+      <dt class="col-sm-3">Name</dt><dd class="col-sm-9">${name}</dd>
+      <dt class="col-sm-3">Email</dt><dd class="col-sm-9">${email}</dd>
+      <dt class="col-sm-3">Income</dt><dd class="col-sm-9">₦${income}</dd>
+      <dt class="col-sm-3">Employment</dt><dd class="col-sm-9">${employment}</dd>
+      <dt class="col-sm-3">Amount</dt><dd class="col-sm-9">₦${amount}</dd>
+      <dt class="col-sm-3">Tenure</dt><dd class="col-sm-9">${tenure} months</dd>
+      <dt class="col-sm-3">Purpose</dt><dd class="col-sm-9">${purpose}</dd>
+    </dl>
+  `;
+  $('review-summary').innerHTML = summary;
+}
+
+async function handleApply() {
+  if (!state.user) {
+    showToast('Please login before submitting an application.', 'error');
+    navigateTo('login');
+    return;
+  }
+
+  const payload = {
+    amount: Number($('loan-amount')?.value),
+    tenure: Number($('loan-tenure')?.value),
+    income: Number($('loan-income')?.value),
+    employment: $('loan-employment')?.value,
+    purpose: $('loan-purpose')?.value,
+    // These are not in the new form, so we'll use dummy data or remove them from the backend
+    collateral: '',
+    notes: '',
+  };
+
+  try {
+    const { application } = await apiFetch('/loans', { method: 'POST', body: payload });
+    $('applyForm')?.reset();
+    showToast('Application submitted successfully.', 'success');
+    navigateTo('status');
+  } catch (err) {
+    const errorEl = $('applyError');
+    errorEl.textContent = err.message || 'Unable to submit application';
+    errorEl.style.display = 'block';
+  }
+}
+window.handleApply = handleApply;
 
 async function loadMyApplications() {
   const area = $('myAppsArea');
+  if (!area) return;
   if (!state.user) {
-    area.innerHTML = '<div class="muted-small">Please login to view your applications.</div>';
+    area.innerHTML = '<div class="alert alert-warning">Login to view your loan applications.</div>';
     return;
   }
   try {
@@ -113,14 +327,62 @@ async function loadMyApplications() {
     state.myApplications = applications || [];
     renderMyApps();
   } catch (err) {
-    area.innerHTML = `<div class="error">${err.message}</div>`;
+    if (err.status === 401) {
+      setAuthToken(null);
+      state.user = null;
+      renderUserStatus();
+    }
+    area.innerHTML = `<div class="alert alert-danger">${escapeHtml(err.message)}</div>`;
   }
 }
 
+function renderMyApps() {
+  const area = $('myAppsArea');
+  if (!area) return;
+  if (!state.user) {
+    area.innerHTML = '<div class="alert alert-warning">Login to view your loan applications.</div>';
+    return;
+  }
+  if (!state.myApplications.length) {
+    area.innerHTML = '<div class="alert alert-info">No applications yet. Kickstart one from the Apply tab.</div>';
+    return;
+  }
+  const cards = state.myApplications
+    .slice()
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    .map(
+      (app) => `
+      <a href="#" class="list-group-item list-group-item-action" aria-current="true">
+        <div class="d-flex w-100 justify-content-between">
+          <h5 class="mb-1">Loan for ₦${app.amount}</h5>
+          <small>${new Date(app.createdAt).toLocaleDateString()}</small>
+        </div>
+        <p class="mb-1">Tenure: ${app.tenure} months</p>
+        <small>${statusBadge(app.status)}</small>
+      </a>`
+    )
+    .join('');
+  area.innerHTML = `<div class="list-group">${cards}</div>`;
+}
+
+function statusBadge(status) {
+  const badgeMap = {
+    Pending: 'warning',
+    Approved: 'success',
+    Rejected: 'danger',
+  };
+  const badgeClass = badgeMap[status] || 'secondary';
+  return `<span class="badge bg-${badgeClass}">${status}</span>`;
+}
+
 async function loadAdminData() {
-  const isAdmin = state.user && state.user.role === 'admin';
-  renderAdminLoginArea();
-  if (!isAdmin) return;
+  const adminArea = $('adminArea');
+  if (!adminArea) return;
+  if (!state.user || state.user.role !== 'admin') {
+    adminArea.innerHTML = '<div class="alert alert-danger">You are not authorized to view this page.</div>';
+    return;
+  }
+
   try {
     const [loanResponse, overviewResponse] = await Promise.all([
       apiFetch('/loans'),
@@ -128,374 +390,142 @@ async function loadAdminData() {
     ]);
     state.adminApplications = loanResponse.applications || [];
     state.adminOverview = overviewResponse || null;
-    renderAdminLoginArea();
-  } catch (err) {
-    const area = $('adminTableArea');
-    area.innerHTML = `<div class="error">${err.message}</div>`;
-  }
-}
-
-function renderMyApps() {
-  const area = $('myAppsArea');
-  area.innerHTML = '';
-  if (!state.user) {
-    area.innerHTML = '<div class="muted-small">Please login to view your applications.</div>';
-    return;
-  }
-  if (!state.myApplications.length) {
-    area.innerHTML = '<div class="muted-small">No applications yet. Click Apply to submit a loan request.</div>';
-    return;
-  }
-  let html = '<table><thead><tr><th>Requested</th><th>Tenure</th><th>EMI</th><th>Status</th><th>Applied</th><th></th></tr></thead><tbody>';
-  state.myApplications
-    .slice()
-    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
-    .forEach((app) => {
-      html += `<tr>
-        <td>${formatN(app.amount)}</td>
-        <td>${app.tenure} months</td>
-        <td>${formatN(app.monthlyEMI)}</td>
-        <td>${statusPill(app.status)}</td>
-        <td>${new Date(app.createdAt).toLocaleString()}</td>
-        <td><button class="btn ghost" onclick="downloadAppCSV('${app.id}')">Receipt</button></td>
-      </tr>`;
-    });
-  html += '</tbody></table>';
-  area.innerHTML = html;
-}
-
-function renderAdminLoginArea() {
-  const loginArea = $('adminLoginArea');
-  const adminArea = $('adminArea');
-  if (state.user && state.user.role === 'admin') {
-    loginArea.style.display = 'none';
-    adminArea.style.display = 'block';
     renderAdminTable();
-  } else {
-    loginArea.style.display = 'block';
-    adminArea.style.display = 'none';
-    $('adminTableArea').innerHTML = '<div class="muted-small">Login as admin to manage applications.</div>';
+  } catch (err) {
+    adminArea.innerHTML = `<div class="alert alert-danger">${escapeHtml(err.message)}</div>`;
   }
 }
 
 function renderAdminTable() {
-  const area = $('adminTableArea');
-  if (!state.user || state.user.role !== 'admin') {
-    area.innerHTML = '<div class="muted-small">Administrator access required.</div>';
-    return;
-  }
+  const tableArea = $('adminTableArea');
+  const metricsArea = $('adminMetrics');
+  if (!tableArea || !metricsArea) return;
+
   const overview = state.adminOverview;
-  const apps = state.adminApplications.slice().sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-  let html = '';
-  if (overview && overview.totals) {
+  if (overview?.totals) {
     const { total_users: totalUsers, total_applications: totalApps, pending, approved, rejected } = overview.totals;
-    html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:12px">
-      <div class="tile"><div class="small">Total users</div><div class="big">${totalUsers}</div></div>
-      <div class="tile"><div class="small">Applications</div><div class="big">${totalApps}</div></div>
-      <div class="tile"><div class="small">Pending</div><div class="big">${pending}</div></div>
-      <div class="tile"><div class="small">Approved</div><div class="big">${approved}</div></div>
-      <div class="tile"><div class="small">Rejected</div><div class="big">${rejected}</div></div>
-    </div>`;
+    const metricData = [
+      { label: 'Users', value: totalUsers },
+      { label: 'Applications', value: totalApps },
+      { label: 'Pending', value: pending },
+      { label: 'Approved', value: approved },
+      { label: 'Rejected', value: rejected },
+    ];
+    metricsArea.innerHTML = metricData
+      .map(
+        (m) => `
+        <div class="card me-2">
+          <div class="card-body">
+            <h6 class="card-title">${m.label}</h6>
+            <p class="card-text fs-4">${m.value}</p>
+          </div>
+        </div>`
+      )
+      .join('');
   }
 
-  if (!apps.length) {
-    html += '<div class="muted-small">No applications yet.</div>';
-    area.innerHTML = html;
+  if (!state.adminApplications.length) {
+    tableArea.innerHTML = '<div class="alert alert-info">No applications to display.</div>';
     return;
   }
 
-  html += '<table><thead><tr><th>Applicant</th><th>Amount</th><th>Tenure</th><th>EMI</th><th>Purpose</th><th>Status</th><th>Applied</th><th>Actions</th></tr></thead><tbody>';
-  apps.forEach((a) => {
-    html += `<tr>
-      <td>${escapeHtml(a.userName || '')}<div class="muted-small">${escapeHtml(a.userEmail || '')}</div></td>
-      <td>${formatN(a.amount)}</td>
-      <td>${a.tenure}m</td>
-      <td>${formatN(a.monthlyEMI)}</td>
-      <td class="muted-small">${escapeHtml(a.purpose || '')}</td>
-      <td>${statusPill(a.status)}</td>
-      <td class="muted-small">${new Date(a.createdAt).toLocaleString()}</td>
-      <td>
-        <button class="btn ghost" onclick="viewApp('${a.id}')">View</button>
-        <button class="btn" onclick="quickApprove('${a.id}')">Approve</button>
-        <button class="btn" style="background:#ef4444" onclick="quickReject('${a.id}')">Reject</button>
-      </td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
+  const tableRows = state.adminApplications
+    .slice()
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    .map(
+      (app) => `
+      <tr>
+        <td>${app.userName || 'N/A'}</td>
+        <td>₦${app.amount}</td>
+        <td>${app.tenure} months</td>
+        <td>${statusBadge(app.status)}</td>
+        <td>
+          <button class="btn btn-sm btn-primary" onclick="viewApp('${app.id}')">Details</button>
+        </td>
+      </tr>`
+    )
+    .join('');
 
-  if (overview && overview.recentEvents && overview.recentEvents.length) {
-    html += '<div style="margin-top:16px"><div class="small">Latest activity</div><ul class="muted-small" style="margin:8px 0 0 18px">';
-    overview.recentEvents.slice(0, 5).forEach((event) => {
-      const actor = event.actor_name ? `${event.actor_name} (${event.actor_role || 'system'})` : event.actor_role || 'system';
-      html += `<li>${new Date(event.created_at).toLocaleString()} — ${escapeHtml(event.event_type)} by ${escapeHtml(actor)} · ${escapeHtml(event.detail || '')}</li>`;
-    });
-    html += '</ul></div>';
-  }
-
-  area.innerHTML = html;
+  tableArea.innerHTML = `
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Applicant</th>
+          <th>Amount</th>
+          <th>Tenure</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${tableRows}
+      </tbody>
+    </table>`;
 }
-
-async function handleRegister() {
-  clearError('regError');
-  try {
-    const payload = {
-      name: $('reg-name').value.trim(),
-      email: $('reg-email').value.trim().toLowerCase(),
-      phone: $('reg-phone').value.trim(),
-      password: $('reg-password').value,
-    };
-    if (!payload.name || !payload.email || !payload.password) {
-      throw new Error('Please fill all required fields.');
-    }
-    const { user } = await apiFetch('/auth/register', { method: 'POST', body: payload });
-    state.user = user;
-    $('registerForm').reset();
-    alert('Registration successful. You are now logged in.');
-    void loadMyApplications();
-    navigateTo('apply');
-  } catch (err) {
-    showError('regError', err.message || 'Registration failed');
-  }
-}
-window.handleRegister = handleRegister;
-
-async function handleLogin() {
-  clearError('loginError');
-  try {
-    const payload = {
-      email: $('login-email').value.trim().toLowerCase(),
-      password: $('login-password').value,
-    };
-    const { user } = await apiFetch('/auth/login', { method: 'POST', body: payload });
-    state.user = user;
-    $('loginForm').reset();
-    alert('Logged in successfully.');
-    if (user.role === 'admin') {
-      navigateTo('admin');
-    } else {
-      void loadMyApplications();
-      navigateTo('apply');
-    }
-  } catch (err) {
-    showError('loginError', err.message || 'Login failed');
-  }
-}
-window.handleLogin = handleLogin;
-
-async function handleAdminLogin() {
-  clearError('adminLoginError');
-  try {
-    const payload = {
-      email: $('admin-email').value.trim().toLowerCase(),
-      password: $('admin-password').value,
-    };
-    const { user } = await apiFetch('/auth/login', { method: 'POST', body: payload });
-    state.user = user;
-    $('adminLogin').reset();
-    if (user.role !== 'admin') {
-      showError('adminLoginError', 'This account is not an administrator.');
-      navigateTo('login');
-      return;
-    }
-    alert('Administrator logged in.');
-    void loadAdminData();
-  } catch (err) {
-    showError('adminLoginError', err.message || 'Admin login failed');
-  }
-}
-window.handleAdminLogin = handleAdminLogin;
-
-async function adminLogout() {
-  try {
-    await apiFetch('/auth/logout', { method: 'POST' });
-  } catch (_err) {
-    // ignore network errors here
-  }
-  state.user = null;
-  state.adminApplications = [];
-  state.adminOverview = null;
-  renderAdminLoginArea();
-  alert('Logged out.');
-  navigateTo('home');
-}
-window.adminLogout = adminLogout;
-
-async function handleApply() {
-  clearError('applyError');
-  if (!state.user) {
-    showError('applyError', 'You must login before applying.');
-    navigateTo('login');
-    return;
-  }
-  const payload = {
-    amount: Number($('loan-amount').value),
-    tenure: Number($('loan-tenure').value),
-    income: Number($('loan-income').value),
-    employment: $('loan-employment').value,
-    purpose: $('loan-purpose').value,
-    collateral: $('loan-collateral').value.trim(),
-    notes: $('loan-notes').value.trim(),
-  };
-  try {
-    const { application } = await apiFetch('/loans', { method: 'POST', body: payload });
-    $('applyForm').reset();
-    updateQuickPreview(0, 0, 0);
-    alert('Application submitted successfully.');
-    state.myApplications.unshift(application);
-    renderMyApps();
-    navigateTo('status');
-  } catch (err) {
-    showError('applyError', err.message || 'Unable to submit application');
-  }
-}
-window.handleApply = handleApply;
 
 async function viewApp(id) {
   try {
     const data = await apiFetch(`/loans/${id}`);
-    const a = data.application;
-    const modal = `
-${statusPill(a.status)}\n
-Applicant: ${a.userName || ''} (${a.userEmail || ''})\n
-Amount: ${formatN(a.amount)}\n
-Tenure: ${a.tenure} months\n
-EMI: ${formatN(a.monthlyEMI)}\n
-Purpose: ${a.purpose}\n
-Employment: ${a.employment}\n
-Collateral: ${a.collateral || '—'}\n
-Notes: ${a.notes || '—'}\n
-Preview eligible: ${a.eligiblePreview ? 'Yes' : 'No'}\n
-Admin notes: ${a.adminNotes || '—'}
-`;
-    const action = prompt(`${modal}\n\nType 'approve', 'reject', or enter an admin note (cancel to exit):`);
-    if (!action) return;
-    const lower = action.toLowerCase();
-    if (lower === 'approve') {
-      await updateAppStatus(id, 'Approved');
-      return;
-    }
-    if (lower === 'reject') {
-      await updateAppStatus(id, 'Rejected');
-      return;
-    }
-    await updateAppNote(id, action);
+    const application = data.application;
+    const events = data.events || [];
+    const content = `
+      <dl class="row">
+        <dt class="col-sm-3">Applicant</dt><dd class="col-sm-9">${application.userName}</dd>
+        <dt class="col-sm-3">Email</dt><dd class="col-sm-9">${application.userEmail}</dd>
+        <dt class="col-sm-3">Amount</dt><dd class="col-sm-9">₦${application.amount}</dd>
+        <dt class="col-sm-3">Tenure</dt><dd class="col-sm-9">${application.tenure} months</dd>
+        <dt class="col-sm-3">EMI</dt><dd class="col-sm-9">₦${application.monthlyEMI}</dd>
+        <dt class="col-sm-3">Status</dt><dd class="col-sm-9">${statusBadge(application.status)}</dd>
+      </dl>
+      <hr />
+      <h5>Actions</h5>
+      <div class="btn-group" role="group">
+        <button class="btn btn-success" onclick="updateAppStatus('${id}', 'Approved')">Approve</button>
+        <button class="btn btn-danger" onclick="updateAppStatus('${id}', 'Rejected')">Reject</button>
+      </div>
+      <hr />
+      <h5>Admin Notes</h5>
+      <textarea class="form-control" id="admin-notes" rows="3">${application.adminNotes || ''}</textarea>
+      <button class="btn btn-primary mt-2" onclick="submitModalNote('${id}')">Save Note</button>
+      `;
+    $('appModalBody').innerHTML = content;
+    const appModal = new bootstrap.Modal($('appModal'));
+    appModal.show();
   } catch (err) {
-    alert(err.message || 'Unable to load application');
+    showToast(err.message || 'Unable to load application', 'error');
   }
 }
 window.viewApp = viewApp;
-
-async function quickApprove(id) {
-  await updateAppStatus(id, 'Approved');
-}
-window.quickApprove = quickApprove;
-
-async function quickReject(id) {
-  await updateAppStatus(id, 'Rejected');
-}
-window.quickReject = quickReject;
 
 async function updateAppStatus(id, status) {
   try {
     await apiFetch(`/loans/${id}/status`, { method: 'PATCH', body: { status } });
     await loadAdminData();
-    alert('Status updated.');
+    const appModal = bootstrap.Modal.getInstance($('appModal'));
+    appModal.hide();
+    showToast(`Status updated to ${status}.`, 'success');
   } catch (err) {
-    alert(err.message || 'Unable to update status');
+    showToast(err.message || 'Unable to update status', 'error');
   }
 }
+window.updateAppStatus = updateAppStatus;
 
-async function updateAppNote(id, note) {
+async function submitModalNote(id) {
+  const note = $('admin-notes').value.trim();
   try {
     await apiFetch(`/loans/${id}/notes`, { method: 'PATCH', body: { adminNotes: note } });
     await loadAdminData();
-    alert('Note added.');
+    const appModal = bootstrap.Modal.getInstance($('appModal'));
+    appModal.hide();
+    showToast('Note added.', 'success');
   } catch (err) {
-    alert(err.message || 'Unable to add note');
+    showToast(err.message || 'Unable to add note', 'error');
   }
 }
-
-async function exportAllCSV() {
-  if (!state.user || state.user.role !== 'admin') {
-    alert('Administrator access required');
-    return;
-  }
-  if (!state.adminApplications.length) {
-    alert('No applications to export.');
-    return;
-  }
-  const rows = [
-    ['id', 'userName', 'userEmail', 'amount', 'tenure', 'monthlyEMI', 'purpose', 'employment', 'status', 'adminNotes', 'createdAt'],
-  ];
-  state.adminApplications.forEach((a) => {
-    rows.push([
-      a.id,
-      a.userName,
-      a.userEmail,
-      a.amount,
-      a.tenure,
-      a.monthlyEMI,
-      a.purpose,
-      a.employment,
-      a.status,
-      (a.adminNotes || '').replace(/\n/g, ' '),
-      a.createdAt,
-    ]);
-  });
-  downloadCSV(rows, 'applications_all.csv');
-}
-window.exportAllCSV = exportAllCSV;
-
-function downloadAppCSV(appId) {
-  const source = state.user && state.user.role === 'admin' ? state.adminApplications : state.myApplications;
-  const app = source.find((x) => x.id === appId);
-  if (!app) {
-    alert('Application not found.');
-    return;
-  }
-  const rows = [
-    ['Field', 'Value'],
-    ['Application ID', app.id],
-    ['Applicant', app.userName || ''],
-    ['Email', app.userEmail || ''],
-    ['Amount', app.amount],
-    ['Tenure (months)', app.tenure],
-    ['Monthly EMI', app.monthlyEMI],
-    ['Interest rate (p.a.)', `${(app.annualRate * 100).toFixed(2)}%`],
-    ['Purpose', app.purpose],
-    ['Employment', app.employment],
-    ['Collateral', app.collateral || ''],
-    ['Preview eligible', app.eligiblePreview ? 'Yes' : 'No'],
-    ['Status', app.status],
-    ['Admin notes', app.adminNotes || ''],
-    ['Applied at', app.createdAt],
-  ];
-  downloadCSV(rows, `loan_${app.id}.csv`);
-}
-window.downloadAppCSV = downloadAppCSV;
-
-function downloadCSV(rows, filename) {
-  const content = rows
-    .map((r) => r.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(','))
-    .join('\n');
-  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-function statusPill(status) {
-  if (status === 'Pending') return '<span class="status-pill status-pending">Pending</span>';
-  if (status === 'Approved') return '<span class="status-pill status-approved">Approved</span>';
-  if (status === 'Rejected') return '<span class="status-pill status-rejected">Rejected</span>';
-  return `<span class="status-pill">${escapeHtml(status)}</span>`;
-}
+window.submitModalNote = submitModalNote;
 
 function escapeHtml(value) {
-  return String(value || '')
+  return String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -503,59 +533,19 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-function formatN(n) {
-  const num = Number(n || 0);
-  return `₦${num.toLocaleString()}`;
-}
-
-function calcInterestRate(tenureMonths, purpose) {
-  if (purpose === 'business') return 0.155;
-  if (tenureMonths <= 12) return 0.125;
-  if (tenureMonths <= 24) return 0.145;
-  return 0.165;
-}
-
-function monthlyPayment(principal, annualRate, months) {
-  if (months <= 0) return 0;
-  const r = annualRate / 12;
-  if (r === 0) return principal / months;
-  const numerator = principal * r * Math.pow(1 + r, months);
-  const denominator = Math.pow(1 + r, months) - 1;
-  return numerator / denominator;
-}
-
-function updateQuickPreview(amount, tenure, income) {
-  $('quickLoanAmount').innerText = amount ? formatN(amount) : '₦0';
-  if (amount && tenure) {
-    const annualRate = calcInterestRate(tenure, $('loan-purpose').value);
-    const emi = Math.ceil(monthlyPayment(amount, annualRate, tenure));
-    $('quickRepay').innerText = `${tenure} months • EMI ${formatN(emi)} • Rate ${(annualRate * 100).toFixed(2)}% p.a.`;
-    let hint = 'Likely eligible';
-    if (!income) hint = 'Provide income for eligibility preview';
-    else if (emi > 0.4 * income) hint = 'EMI > 40% income — may be ineligible';
-    $('quickElig').innerText = hint;
-  } else {
-    $('quickRepay').innerText = 'Enter loan amount & tenure';
-    $('quickElig').innerText = 'Not checked';
-  }
-}
-
-$('loan-amount').addEventListener('input', () => updateQuickPreview(Number($('loan-amount').value), Number($('loan-tenure').value), Number($('loan-income').value)));
-$('loan-tenure').addEventListener('change', () => updateQuickPreview(Number($('loan-amount').value), Number($('loan-tenure').value), Number($('loan-income').value)));
-$('loan-income').addEventListener('input', () => updateQuickPreview(Number($('loan-amount').value), Number($('loan-tenure').value), Number($('loan-income').value)));
-
 (async function init() {
+  hydrateAuthToken();
+  renderUserStatus();
+
+  const lastTab = localStorage.getItem(LAST_TAB_KEY) || 'home';
+  setActiveTab(lastTab);
+
   await fetchSession();
-  const lastTab = localStorage.getItem('loan_app_last_tab') || 'home';
   if (state.user) {
     if (state.user.role === 'admin') {
-      setActiveTab('admin');
       await loadAdminData();
     } else {
-      setActiveTab(lastTab === 'admin' ? 'apply' : lastTab);
       await loadMyApplications();
     }
-  } else {
-    setActiveTab(lastTab);
   }
 })();
