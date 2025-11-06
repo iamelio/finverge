@@ -22,12 +22,22 @@ const qs = (selector) => document.querySelector(selector);
 const qsa = (selector) => Array.from(document.querySelectorAll(selector));
 
 const pageSections = qsa('[data-page]');
+const navLinks = qsa('.nav-link');
 
 function setActiveTab(tab) {
   pageSections.forEach((section) => {
     const isActive = section.dataset.page === tab;
     section.style.display = isActive ? 'block' : 'none';
   });
+
+  navLinks.forEach((link) => {
+    if (link.getAttribute('onclick').includes(`navigateTo('${tab}')`)) {
+      link.classList.add('active');
+    } else {
+      link.classList.remove('active');
+    }
+  });
+
   localStorage.setItem(LAST_TAB_KEY, tab);
   if (tab === 'status') {
     void loadMyApplications();
@@ -73,15 +83,31 @@ function renderUserStatus() {
   const userActions = $('userActions');
   const userName = $('userName');
   const userRole = $('userRole');
+  const navApply = $('nav-apply');
+  const navAdmin = $('nav-admin');
+  const navStatus = $('nav-status');
 
   if (!state.user) {
     userBadge.classList.add('d-none');
     userActions.classList.remove('d-none');
+    navApply.style.display = 'block';
+    navAdmin.style.display = 'none';
+    navStatus.querySelector('.nav-link').textContent = 'My Loans';
   } else {
     userBadge.classList.remove('d-none');
     userActions.classList.add('d-none');
     userName.textContent = state.user.name || state.user.email;
     userRole.textContent = mapRole(state.user.role);
+
+    if (state.user.role === 'admin') {
+      navApply.style.display = 'none';
+      navAdmin.style.display = 'block';
+      navStatus.querySelector('.nav-link').textContent = 'All Applications';
+    } else {
+      navApply.style.display = 'block';
+      navAdmin.style.display = 'none';
+      navStatus.querySelector('.nav-link').textContent = 'My Loans';
+    }
   }
 }
 
@@ -153,7 +179,7 @@ async function handleRegister() {
     email: form.querySelector('#reg-email').value.trim().toLowerCase(),
     phone: form.querySelector('#reg-phone').value.trim(),
     password: form.querySelector('#reg-password').value,
-    accountType: form.querySelector('input[name="role"]:checked').value || 'user',
+    accountType: document.querySelector('input[name="role"]:checked').value || 'user',
   };
 
   if (!payload.name || !payload.email || !payload.password) {
@@ -286,8 +312,8 @@ function updateReviewSummary() {
 
 async function handleApply() {
   if (!state.user) {
-    showToast('Please login before submitting an application.', 'error');
-    navigateTo('login');
+    const loginModal = new bootstrap.Modal($('loginModal'));
+    loginModal.show();
     return;
   }
 
@@ -314,6 +340,35 @@ async function handleApply() {
   }
 }
 window.handleApply = handleApply;
+
+async function handleModalLogin() {
+  const form = $('modalLoginForm');
+  const errorEl = $('modalLoginError');
+  errorEl.style.display = 'none';
+
+  const payload = {
+    email: form.querySelector('#modal-login-email').value.trim().toLowerCase(),
+    password: form.querySelector('#modal-login-password').value,
+  };
+
+  try {
+    const { user, token } = await apiFetch('/auth/login', { method: 'POST', body: payload });
+    if (token) {
+      setAuthToken(token);
+    }
+    state.user = user;
+    renderUserStatus();
+    form.reset();
+    const loginModal = bootstrap.Modal.getInstance($('loginModal'));
+    loginModal.hide();
+    showToast('Logged in successfully.', 'success');
+    await handleApply();
+  } catch (err) {
+    errorEl.textContent = err.message || 'Login failed';
+    errorEl.style.display = 'block';
+  }
+}
+window.handleModalLogin = handleModalLogin;
 
 async function loadMyApplications() {
   const area = $('myAppsArea');
@@ -351,15 +406,22 @@ function renderMyApps() {
     .slice()
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
     .map(
-      (app) => `
-      <a href="#" class="list-group-item list-group-item-action" aria-current="true">
-        <div class="d-flex w-100 justify-content-between">
-          <h5 class="mb-1">Loan for ₦${app.amount}</h5>
-          <small>${new Date(app.createdAt).toLocaleDateString()}</small>
-        </div>
-        <p class="mb-1">Tenure: ${app.tenure} months</p>
-        <small>${statusBadge(app.status)}</small>
-      </a>`
+      (app) => {
+        let rejectionReason = '';
+        if (app.status === 'Rejected' && app.rejectionReason) {
+          rejectionReason = `<p class="mb-1 text-danger">Reason: ${app.rejectionReason}</p>`;
+        }
+        return `
+          <a href="#" class="list-group-item list-group-item-action" aria-current="true">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">Loan for ₦${app.amount}</h5>
+              <small>${new Date(app.createdAt).toLocaleDateString()}</small>
+            </div>
+            <p class="mb-1">Tenure: ${app.tenure} months</p>
+            <small>${statusBadge(app.status)}</small>
+            ${rejectionReason}
+          </a>`;
+      }
     )
     .join('');
   area.innerHTML = `<div class="list-group">${cards}</div>`;
@@ -370,100 +432,16 @@ function statusBadge(status) {
     Pending: 'warning',
     Approved: 'success',
     Rejected: 'danger',
+    'Under Review': 'info',
   };
   const badgeClass = badgeMap[status] || 'secondary';
   return `<span class="badge bg-${badgeClass}">${status}</span>`;
 }
 
-async function loadAdminData() {
-  const adminArea = $('adminArea');
-  if (!adminArea) return;
-  if (!state.user || state.user.role !== 'admin') {
-    adminArea.innerHTML = '<div class="alert alert-danger">You are not authorized to view this page.</div>';
-    return;
-  }
-
-  try {
-    const [loanResponse, overviewResponse] = await Promise.all([
-      apiFetch('/loans'),
-      apiFetch('/admin/overview'),
-    ]);
-    state.adminApplications = loanResponse.applications || [];
-    state.adminOverview = overviewResponse || null;
-    renderAdminTable();
-  } catch (err) {
-    adminArea.innerHTML = `<div class="alert alert-danger">${escapeHtml(err.message)}</div>`;
-  }
-}
-
-function renderAdminTable() {
-  const tableArea = $('adminTableArea');
-  const metricsArea = $('adminMetrics');
-  if (!tableArea || !metricsArea) return;
-
-  const overview = state.adminOverview;
-  if (overview?.totals) {
-    const { total_users: totalUsers, total_applications: totalApps, pending, approved, rejected } = overview.totals;
-    const metricData = [
-      { label: 'Users', value: totalUsers },
-      { label: 'Applications', value: totalApps },
-      { label: 'Pending', value: pending },
-      { label: 'Approved', value: approved },
-      { label: 'Rejected', value: rejected },
-    ];
-    metricsArea.innerHTML = metricData
-      .map(
-        (m) => `
-        <div class="card me-2">
-          <div class="card-body">
-            <h6 class="card-title">${m.label}</h6>
-            <p class="card-text fs-4">${m.value}</p>
-          </div>
-        </div>`
-      )
-      .join('');
-  }
-
-  if (!state.adminApplications.length) {
-    tableArea.innerHTML = '<div class="alert alert-info">No applications to display.</div>';
-    return;
-  }
-
-  const tableRows = state.adminApplications
-    .slice()
-    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
-    .map(
-      (app) => `
-      <tr>
-        <td>${app.userName || 'N/A'}</td>
-        <td>₦${app.amount}</td>
-        <td>${app.tenure} months</td>
-        <td>${statusBadge(app.status)}</td>
-        <td>
-          <button class="btn btn-sm btn-primary" onclick="viewApp('${app.id}')">Details</button>
-        </td>
-      </tr>`
-    )
-    .join('');
-
-  tableArea.innerHTML = `
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th>Applicant</th>
-          <th>Amount</th>
-          <th>Tenure</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${tableRows}
-      </tbody>
-    </table>`;
-}
+let currentAppId = null;
 
 async function viewApp(id) {
+  currentAppId = id;
   try {
     const data = await apiFetch(`/loans/${id}`);
     const application = data.application;
@@ -481,7 +459,8 @@ async function viewApp(id) {
       <h5>Actions</h5>
       <div class="btn-group" role="group">
         <button class="btn btn-success" onclick="updateAppStatus('${id}', 'Approved')">Approve</button>
-        <button class="btn btn-danger" onclick="updateAppStatus('${id}', 'Rejected')">Reject</button>
+        <button class="btn btn-info" onclick="updateAppStatus('${id}', 'Under Review')">Under Review</button>
+        <button class="btn btn-danger" onclick="openRejectionModal('${id}')">Reject</button>
       </div>
       <hr />
       <h5>Admin Notes</h5>
@@ -497,12 +476,36 @@ async function viewApp(id) {
 }
 window.viewApp = viewApp;
 
-async function updateAppStatus(id, status) {
+function openRejectionModal(id) {
+  currentAppId = id;
+  const rejectionModal = new bootstrap.Modal($('rejectionModal'));
+  rejectionModal.show();
+}
+
+async function handleRejectionSubmit() {
+  const reason = $('rejection-reason').value.trim();
+  if (!reason) {
+    showToast('Please provide a rejection reason.', 'error');
+    return;
+  }
+  await updateAppStatus(currentAppId, 'Rejected', reason);
+  const rejectionModal = bootstrap.Modal.getInstance($('rejectionModal'));
+  rejectionModal.hide();
+}
+window.handleRejectionSubmit = handleRejectionSubmit;
+
+async function updateAppStatus(id, status, rejectionReason = null) {
   try {
-    await apiFetch(`/loans/${id}/status`, { method: 'PATCH', body: { status } });
+    const payload = { status };
+    if (rejectionReason) {
+      payload.rejectionReason = rejectionReason;
+    }
+    await apiFetch(`/loans/${id}/status`, { method: 'PATCH', body: payload });
     await loadAdminData();
     const appModal = bootstrap.Modal.getInstance($('appModal'));
-    appModal.hide();
+    if (appModal) {
+      appModal.hide();
+    }
     showToast(`Status updated to ${status}.`, 'success');
   } catch (err) {
     showToast(err.message || 'Unable to update status', 'error');

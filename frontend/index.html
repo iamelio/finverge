@@ -26,13 +26,13 @@
             <li class="nav-item">
               <a class="nav-link active" aria-current="page" href="#" onclick="navigateTo('home')">Overview</a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" id="nav-apply">
               <a class="nav-link" href="#" onclick="navigateTo('apply')">Apply</a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" id="nav-status">
               <a class="nav-link" href="#" onclick="navigateTo('status')">My Loans</a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" id="nav-admin">
               <a class="nav-link" href="#" onclick="navigateTo('admin')">Admin Desk</a>
             </li>
           </ul>
@@ -91,13 +91,13 @@
               <div class="card-body">
                 <h3 class="card-title">Create an account</h3>
                 <p>Select the experience that matches your role in the lending process.</p>
-                <div class="btn-group w-100 mb-3" role="group" aria-label="Account type">
-                  <input type="radio" class="btn-check" name="role" id="role-user" autocomplete="off" value="user" checked>
-                  <label class="btn btn-outline-primary" for="role-user">Borrower</label>
-                  <input type="radio" class="btn-check" name="role" id="role-admin" value="admin" autocomplete="off">
-                  <label class="btn btn-outline-primary" for="role-admin">Administrator</label>
-                </div>
                 <form id="registerForm">
+                  <div class="btn-group w-100 mb-3" role="group" aria-label="Account type">
+                    <input type="radio" class="btn-check" name="role" id="role-user" autocomplete="off" value="user" checked>
+                    <label class="btn btn-outline-primary" for="role-user">Borrower</label>
+                    <input type="radio" class="btn-check" name="role" id="role-admin" value="admin" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="role-admin">Administrator</label>
+                  </div>
                   <div class="mb-3">
                     <label for="reg-name" class="form-label">Full name</label>
                     <input type="text" class="form-control" id="reg-name" placeholder="Jane Doe" required>
@@ -117,6 +117,7 @@
                   <button type="button" class="btn btn-primary" onclick="handleRegister()">Create account</button>
                   <div id="regError" class="form-text text-danger" style="display:none"></div>
                 </form>
+                <p class="small mt-3">Already have an account? <a href="#" onclick="navigateTo('login')">Login</a></p>
               </div>
             </div>
           </div>
@@ -143,6 +144,7 @@
                   <button type="button" class="btn btn-primary" onclick="handleLogin()">Login</button>
                   <div id="loginError" class="form-text text-danger" style="display:none"></div>
                 </form>
+                <p class="small mt-3">Don't have an account? <a href="#" onclick="navigateTo('register')">Register</a></p>
                 <p class="small mt-3">
                   Demo admin credentials: <strong>admin@finverge.demo</strong> / <strong>admin123</strong>
                 </p>
@@ -274,16 +276,115 @@
           <div id="adminTableArea"></div>
         </div>
       </section>
+
+      <!-- Features -->
+      <section data-page="features" style="display:none">
+        <h2>Features</h2>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Online Loan Application</h5>
+                <p class="card-text">Borrowers can easily apply for loans online through a simple multi-step form.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Real-time Status Updates</h5>
+                <p class="card-text">Applicants can track the status of their loan applications in real-time.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Admin Dashboard</h5>
+                <p class="card-text">A comprehensive dashboard for admins to manage and review loan applications.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQs -->
+      <section data-page="faqs" style="display:none">
+        <h2>Frequently Asked Questions</h2>
+        <div class="accordion" id="faqAccordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+              <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                How do I apply for a loan?
+              </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+              <div class="accordion-body">
+                You can apply for a loan by clicking the "Apply" button in the navigation bar and filling out the multi-step application form.
+              </div>
+            </div>
+          </div>
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingTwo">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                What are the required documents?
+              </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+              <div class="accordion-body">
+                The required documents may vary depending on the loan type and amount. However, you will generally need to provide proof of income and identity.
+              </div>
+            </div>
+          </div>
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingThree">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                How long does it take to get a loan approved?
+              </button>
+            </h2>
+            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+              <div class="accordion-body">
+                The approval process is fast and automated. You can get a decision on your loan application within minutes.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- About -->
+      <section data-page="about" style="display:none">
+        <h2>About Finverge</h2>
+        <p>An Online Loan Application and Verification System delivered by a multidisciplinary team using a modified Waterfall lifecycle.</p>
+        <h3>Delivery milestones</h3>
+        <p>Our sequential roadmap ensured each component matured before the next began.</p>
+        <ul>
+          <li>Proposal approval, objective definition, and comparative research</li>
+          <li>Systems analysis with use-case and data-flow modelling</li>
+          <li>Front-end implementation of responsive forms and flows</li>
+          <li>Backend services, authentication, and database integration</li>
+          <li>Iterative testing, debugging, and performance tuning</li>
+        </ul>
+        <h3>Team contributions</h3>
+        <p>Each member applied their strengths to deliver the full stack experience.</p>
+        <ul>
+          <li>Afolabi Adebukola Nifemi & Afolabi Olawale Sunday: front-end design and UX</li>
+          <li>Aizebioje David Coker & Abidoye Itunu Oluwaseun: backend logic and data layer</li>
+          <li>Akinsoyinu Oluwatomisin Emmanuel & Adebayo Kehinde Abraham: database implementation and verification</li>
+          <li>Collaborative requirement analysis, diagrams, and validation throughout</li>
+        </ul>
+        <h3>Project summary</h3>
+        <p>Finverge replaces manual loan processing with a secure, transparent web platform. Borrowers register, complete guided applications, and monitor progress from any device. Administrators authenticate, verify eligibility, annotate decisions, and approve or reject requests without leaving the console. The result is reduced paperwork, faster turnaround times, and a shared understanding between institutions and clients.</p>
+        <p>By combining robust engineering practices with thoughtful UX, the system demonstrates how digital lending can be efficient, auditable, and user-friendly.</p>
+      </section>
     </div>
   </main>
 
   <footer class="container py-3 my-4">
     <ul class="nav justify-content-center border-bottom pb-3 mb-3">
-      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted">Home</a></li>
-      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted">Features</a></li>
-      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted">Pricing</a></li>
-      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted">FAQs</a></li>
-      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted">About</a></li>
+      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted" onclick="navigateTo('home')">Home</a></li>
+      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted" onclick="navigateTo('features')">Features</a></li>
+      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted" onclick="navigateTo('faqs')">FAQs</a></li>
+      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted" onclick="navigateTo('about')">About</a></li>
     </ul>
     <p class="text-center text-muted">© 2025 Finverge, Inc</p>
   </footer>
@@ -309,6 +410,53 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="loginModalLabel">Login Required</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>You need to be logged in to submit a loan application.</p>
+          <form id="modalLoginForm">
+            <div class="mb-3">
+              <label for="modal-login-email" class="form-label">Email</label>
+              <input type="email" class="form-control" id="modal-login-email" placeholder="you@example.com" required>
+            </div>
+            <div class="mb-3">
+              <label for="modal-login-password" class="form-label">Password</label>
+              <input type="password" class="form-control" id="modal-login-password" placeholder="Password" required>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="handleModalLogin()">Login</button>
+            <div id="modalLoginError" class="form-text text-danger" style="display:none"></div>
+          </form>
+          <p class="small mt-3">Don't have an account? <a href="#" onclick="navigateTo('register')">Register</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="rejectionModalLabel">Rejection Reason</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="rejectionForm">
+            <div class="mb-3">
+              <label for="rejection-reason" class="form-label">Please provide a reason for rejecting this application:</label>
+              <textarea class="form-control" id="rejection-reason" rows="3"></textarea>
+            </div>
+            <button type="button" class="btn btn-danger" onclick="handleRejectionSubmit()">Submit Rejection</button>
+          </form>
         </div>
       </div>
     </div>
