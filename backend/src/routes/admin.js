@@ -42,4 +42,35 @@ router.get('/overview', (_req, res, next) => {
   }
 });
 
+router.patch('/applications/batch-update', (req, res, next) => {
+  try {
+    const { applicationIds, status } = req.body;
+    if (!Array.isArray(applicationIds) || !status) {
+      const err = new Error('Invalid payload: applicationIds must be an array and status is required.');
+      err.status = 400;
+      throw err;
+    }
+    const db = getDb();
+    const stmt = db.prepare(`
+      UPDATE loan_applications
+      SET status = ?,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id IN (${applicationIds.map(() => '?').join(',')})
+    `);
+    const result = stmt.run(status, ...applicationIds);
+
+    const eventStmt = db.prepare(`
+      INSERT INTO loan_events (application_id, actor_id, actor_role, event_type, detail)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    for (const appId of applicationIds) {
+      eventStmt.run(appId, req.user.id, req.user.role, 'status_update', `Status changed to ${status} via batch update`);
+    }
+
+    return res.json({ message: `${result.changes} applications updated to ${status}.` });
+  } catch (err) {
+    return next(err);
+  }
+});
+
 module.exports = router;

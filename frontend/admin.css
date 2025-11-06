@@ -1,0 +1,90 @@
+/* Responsive styles for the admin dashboard */
+@media (max-width: 992px) {
+  .admin-table .table {
+    display: none;
+  }
+
+  .admin-cards {
+    display: block;
+  }
+
+  .admin-table .card {
+    margin-bottom: 1rem;
+  }
+}
+
+@media (min-width: 992.01px) {
+  .admin-table .table {
+    display: table;
+  }
+
+  .admin-cards {
+    display: none;
+  }
+}
+
+.table .cell-start {
+  padding-left: 1.5rem !important;
+}
+
+.table .cell-end {
+  padding-right: 1.5rem !important;
+}
+
+.btn-icon {
+  border-radius: 50%;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-badge {
+  padding: 0.35em 0.65em;
+  font-size: .75em;
+  font-weight: 700;
+  line-height: 1;
+  /* Default to light text; override per-variant below */
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 50rem;
+}
+
+/* Improve readability on lighter backgrounds */
+.status-badge.bg-warning,
+.status-badge.bg-info,
+.status-badge.bg-light,
+.status-badge.bg-warning-subtle,
+.status-badge.bg-info-subtle,
+.status-badge.bg-secondary-subtle,
+.status-badge.bg-success-subtle,
+.status-badge.bg-danger-subtle {
+  color: #111 !important;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Keep strong contrast for darker badges */
+.status-badge.bg-success,
+.status-badge.bg-danger,
+.status-badge.bg-secondary,
+.status-badge.bg-primary,
+.status-badge.bg-dark {
+  color: #fff !important;
+}
+
+/* Toolbar spacing for admin actions */
+.admin-actions {
+  gap: .5rem;
+}
+
+.admin-actions .form-control,
+.admin-actions .form-select {
+  min-width: 12rem;
+}
+
+.admin-actions .btn {
+  white-space: nowrap;
+}

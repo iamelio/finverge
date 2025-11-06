@@ -1,469 +1,771 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Finverge Lending Hub</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  <link rel="stylesheet" href="custom.css">
-</head>
-<body class="bg-body-tertiary">
-
-  <header class="container">
-    <nav class="navbar navbar-expand-lg bg-body-tertiary">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="#">
-          <svg width="32" height="32" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" class="d-inline-block align-text-top">
-            <path d="M60 0C26.86 0 0 26.86 0 60C0 93.14 26.86 120 60 120C93.14 120 120 93.14 120 60C120 26.86 93.14 0 60 0ZM82.29 91.27L60 77.74L37.71 91.27L42.14 66.2L24.29 48.86L49.43 45.1L60 22.5L70.57 45.1L95.71 48.86L77.86 66.2L82.29 91.27Z" fill="var(--bs-primary)"/>
-          </svg>
-          Finverge
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="#" onclick="navigateTo('home')">Overview</a>
-            </li>
-            <li class="nav-item" id="nav-apply">
-              <a class="nav-link" href="#" onclick="navigateTo('apply')">Apply</a>
-            </li>
-            <li class="nav-item" id="nav-status">
-              <a class="nav-link" href="#" onclick="navigateTo('status')">My Loans</a>
-            </li>
-            <li class="nav-item" id="nav-admin" style="display:none;">
-              <a class="nav-link" href="#" onclick="navigateTo('admin')">Admin Desk</a>
-            </li>
-          </ul>
-          <div class="d-flex" id="userActions">
-            <button class="btn btn-outline-primary me-2" onclick="navigateTo('login')">Login</button>
-            <button class="btn btn-primary" onclick="navigateTo('register')">Create Account</button>
-          </div>
-          <div id="userBadge" class="d-none align-items-center">
-            <div class="me-2">
-              <div class="fw-bold" id="userName"></div>
-              <div class="small text-muted" id="userRole"></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Finverge</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link rel="stylesheet" href="custom.css" />
+    <link rel="stylesheet" href="admin.css" />
+  </head>
+  <body class="bg-body-tertiary">
+    <header class="container">
+      <nav class="navbar navbar-expand-lg bg-body-tertiary">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 120 120"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              class="d-inline-block align-text-top"
+            >
+              <path
+                d="M60 0C26.86 0 0 26.86 0 60C0 93.14 26.86 120 60 120C93.14 120 120 93.14 120 60C120 26.86 93.14 0 60 0ZM82.29 91.27L60 77.74L37.71 91.27L42.14 66.2L24.29 48.86L49.43 45.1L60 22.5L70.57 45.1L95.71 48.86L77.86 66.2L82.29 91.27Z"
+                fill="var(--bs-primary)"
+              />
+            </svg>
+            Finverge
+          </a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a
+                  class="nav-link active"
+                  aria-current="page"
+                  href="#"
+                  onclick="navigateTo('home')"
+                  >Overview</a
+                >
+              </li>
+              <li class="nav-item" id="nav-apply">
+                <a class="nav-link" href="#" onclick="navigateTo('apply')">Apply</a>
+              </li>
+              <li class="nav-item" id="nav-status">
+                <a class="nav-link" href="#" onclick="navigateTo('status')">My Loans</a>
+              </li>
+              <li class="nav-item" id="nav-admin" style="display: none">
+                <a class="nav-link" href="#" onclick="navigateTo('admin')">Admin Desk</a>
+              </li>
+            </ul>
+            <div class="d-flex" id="userActions">
+              <button class="btn btn-outline-primary me-2" onclick="navigateTo('login')">
+                Login
+              </button>
+              <button class="btn btn-primary" onclick="navigateTo('register')">
+                Create Account
+              </button>
             </div>
-            <button class="btn btn-outline-secondary" onclick="handleLogout()">Logout</button>
-          </div>
-        </div>
-      </div>
-    </nav>
-  </header>
-
-  <main class="container mt-4">
-    <div id="content">
-      <!-- Overview -->
-      <section data-page="home">
-        <div class="row">
-          <div class="col-lg-8">
-            <div class="p-5 mb-4 bg-body-secondary rounded-3">
-              <div class="container-fluid py-5">
-                <h1 class="display-5 fw-bold">Modern, Transparent, Fast Loans</h1>
-                <p class="col-md-8 fs-4">Submit applications online, get automated verification, and enjoy faster approvals. </p>
-                <button class="btn btn-primary btn-lg" type="button" onclick="navigateTo('apply')">Start an application</button>
+            <div id="userBadge" class="d-none align-items-center">
+              <div class="me-2">
+                <div class="fw-bold" id="userName"></div>
+                <div class="small text-muted" id="userRole"></div>
               </div>
-            </div>
-          </div>
-          <div class="col-lg-4">
-            <div class="card text-bg-primary mb-3">
-              <div class="card-body">
-                <h5 class="card-title">4x Faster Decisions</h5>
-                <p class="card-text">Get a preview of your eligibility in minutes, not days.</p>
-              </div>
-            </div>
-            <div class="card text-bg-light mb-3">
-              <div class="card-body">
-                <h5 class="card-title">100% Digital</h5>
-                <p class="card-text">A completely digital trail for your loan applications.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Register -->
-      <section data-page="register" style="display:none">
-        <div class="row justify-content-center">
-          <div class="col-md-6">
-            <div class="card">
-              <div class="card-body">
-                <h3 class="card-title">Create an account</h3>
-                <p>Select the experience that matches your role in the lending process.</p>
-                <form id="registerForm">
-                  <div class="btn-group w-100 mb-3" role="group" aria-label="Account type">
-                    <input type="radio" class="btn-check" name="role" id="role-user" autocomplete="off" value="user" checked>
-                    <label class="btn btn-outline-primary" for="role-user">Borrower</label>
-                    <input type="radio" class="btn-check" name="role" id="role-admin" value="admin" autocomplete="off">
-                    <label class="btn btn-outline-primary" for="role-admin">Administrator</label>
-                  </div>
-                  <div class="mb-3">
-                    <label for="reg-name" class="form-label">Full name</label>
-                    <input type="text" class="form-control" id="reg-name" placeholder="Jane Doe" required>
-                  </div>
-                  <div class="mb-3">
-                    <label for="reg-email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="reg-email" placeholder="jane@example.com" required>
-                  </div>
-                  <div class="mb-3">
-                    <label for="reg-phone" class="form-label">Phone</label>
-                    <input type="text" class="form-control" id="reg-phone" placeholder="+234 801 000 0000">
-                  </div>
-                  <div class="mb-3">
-                    <label for="reg-password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="reg-password" placeholder="Choose a strong password" required>
-                  </div>
-                  <button type="button" class="btn btn-primary" onclick="handleRegister()">Create account</button>
-                  <div id="regError" class="form-text text-danger" style="display:none"></div>
-                </form>
-                <p class="small mt-3">Already have an account? <a href="#" onclick="navigateTo('login')">Login</a></p>
-              </div>
+              <button class="btn btn-outline-secondary" onclick="handleLogout()">
+                Logout
+              </button>
             </div>
           </div>
         </div>
-      </section>
+      </nav>
+    </header>
 
-      <!-- Login -->
-      <section data-page="login" style="display:none">
-        <div class="row justify-content-center">
-          <div class="col-md-6">
-            <div class="card">
-              <div class="card-body">
-                <h3 class="card-title">Welcome back</h3>
-                <p>Access your dashboard to submit or review loan applications.</p>
-                <form id="loginForm">
-                  <div class="mb-3">
-                    <label for="login-email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="login-email" placeholder="you@example.com" required>
-                  </div>
-                  <div class="mb-3">
-                    <label for="login-password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="login-password" placeholder="Password" required>
-                  </div>
-                  <button type="button" class="btn btn-primary" onclick="handleLogin()">Login</button>
-                  <div id="loginError" class="form-text text-danger" style="display:none"></div>
-                </form>
-                <p class="small mt-3">Don't have an account? <a href="#" onclick="navigateTo('register')">Register</a></p>
-                <p class="small mt-3">
-                  Demo admin credentials: <strong>admin@finverge.demo</strong> / <strong>admin123</strong>
-                </p>
+    <main class="container mt-4">
+      <div id="content">
+        <!-- Overview -->
+        <section data-page="home">
+          <div class="row">
+            <div class="col-lg-8">
+              <div class="p-5 mb-4 bg-body-secondary rounded-3">
+                <div class="container-fluid py-5">
+                  <h1 class="display-5 fw-bold">Modern, Transparent, Fast Loans</h1>
+                  <p class="col-md-8 fs-4">
+                    Submit applications online, get automated verification, and enjoy faster
+                    approvals.
+                  </p>
+                  <button
+                    class="btn btn-primary btn-lg"
+                    type="button"
+                    onclick="navigateTo('apply')"
+                  >
+                    Start an application
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div class="card text-bg-primary mb-3">
+                <div class="card-body">
+                  <h5 class="card-title">4x Faster Decisions</h5>
+                  <p class="card-text">
+                    Get a preview of your eligibility in minutes, not days.
+                  </p>
+                </div>
+              </div>
+              <div class="card text-bg-light mb-3">
+                <div class="card-body">
+                  <h5 class="card-title">100% Digital</h5>
+                  <p class="card-text">
+                    A completely digital trail for your loan applications.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- Apply -->
-      <section data-page="apply" style="display:none">
-        <div class="row">
-          <div class="col-md-8">
-            <form id="applyForm" class="needs-validation" novalidate>
-              <!-- Step 1: Personal Info -->
-              <div class="step" id="step1">
-                <h2>Step 1: Personal Information</h2>
-                <div class="mb-3">
-                  <label for="apply-name" class="form-label">Full Name</label>
-                  <input type="text" class="form-control" id="apply-name" required>
-                  <div class="invalid-feedback">Please enter your full name.</div>
+        <!-- Register -->
+        <section data-page="register" style="display: none">
+          <div class="row justify-content-center">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h3 class="card-title">Create an account</h3>
+                  <p>Select the experience that matches your role in the lending process.</p>
+                  <form id="registerForm">
+                    <div class="btn-group w-100 mb-3" role="group" aria-label="Account type">
+                      <input
+                        type="radio"
+                        class="btn-check"
+                        name="role"
+                        id="role-user"
+                        autocomplete="off"
+                        value="user"
+                        checked
+                      />
+                      <label class="btn btn-outline-primary" for="role-user">Borrower</label>
+                      <input
+                        type="radio"
+                        class="btn-check"
+                        name="role"
+                        id="role-admin"
+                        value="admin"
+                        autocomplete="off"
+                      />
+                      <label class="btn btn-outline-primary" for="role-admin"
+                        >Administrator</label
+                      >
+                    </div>
+                    <div class="mb-3">
+                      <label for="reg-name" class="form-label">Full name</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="reg-name"
+                        placeholder="Jane Doe"
+                        required
+                      />
+                    </div>
+                    <div class="mb-3">
+                      <label for="reg-email" class="form-label">Email</label>
+                      <input
+                        type="email"
+                        class="form-control"
+                        id="reg-email"
+                        placeholder="jane@example.com"
+                        required
+                      />
+                    </div>
+                    <div class="mb-3">
+                      <label for="reg-phone" class="form-label">Phone</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="reg-phone"
+                        placeholder="+234 801 000 0000"
+                      />
+                    </div>
+                    <div class="mb-3">
+                      <label for="reg-password" class="form-label">Password</label>
+                      <input
+                        type="password"
+                        class="form-control"
+                        id="reg-password"
+                        placeholder="Choose a strong password"
+                        required
+                      />
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="handleRegister()">
+                      Create account
+                    </button>
+                    <div
+                      id="regError"
+                      class="form-text text-danger"
+                      style="display: none"
+                    ></div>
+                  </form>
+                  <p class="small mt-3">
+                    Already have an account?
+                    <a href="#" onclick="navigateTo('login')">Login</a>
+                  </p>
                 </div>
-                <div class="mb-3">
-                  <label for="apply-email" class="form-label">Email</label>
-                  <input type="email" class="form-control" id="apply-email" required>
-                  <div class="invalid-feedback">Please enter a valid email.</div>
-                </div>
-                <button type="button" class="btn btn-primary" onclick="nextStep(2)">Next</button>
               </div>
+            </div>
+          </div>
+        </section>
 
-              <!-- Step 2: Financial Details -->
-              <div class="step" id="step2" style="display:none;">
-                <h2>Step 2: Financial Details</h2>
-                <div class="mb-3">
-                  <label for="loan-income" class="form-label">Monthly Net Income (₦)</label>
-                  <input type="number" class="form-control" id="loan-income" min="0" step="100" placeholder="150000" required>
-                  <div class="invalid-feedback">Please enter your income.</div>
+        <!-- Login -->
+        <section data-page="login" style="display: none">
+          <div class="row justify-content-center">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h3 class="card-title">Welcome back</h3>
+                  <p>Access your dashboard to submit or review loan applications.</p>
+                  <form id="loginForm">
+                    <div class="mb-3">
+                      <label for="login-email" class="form-label">Email</label>
+                      <input
+                        type="email"
+                        class="form-control"
+                        id="login-email"
+                        placeholder="you@example.com"
+                        required
+                      />
+                    </div>
+                    <div class="mb-3">
+                      <label for="login-password" class="form-label">Password</label>
+                      <input
+                        type="password"
+                        class="form-control"
+                        id="login-password"
+                        placeholder="Password"
+                        required
+                      />
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="handleLogin()">
+                      Login
+                    </button>
+                    <div
+                      id="loginError"
+                      class="form-text text-danger"
+                      style="display: none"
+                    ></div>
+                  </form>
+                  <p class="small mt-3">
+                    Don't have an account?
+                    <a href="#" onclick="navigateTo('register')">Register</a>
+                  </p>
+                  <p class="small mt-3">
+                    Demo admin credentials: <strong>admin@finverge.demo</strong> /
+                    <strong>admin123</strong>
+                  </p>
                 </div>
-                <div class="mb-3">
-                  <label for="loan-employment" class="form-label">Employment Status</label>
-                  <select class="form-select" id="loan-employment">
-                    <option value="employed">Employed</option>
-                    <option value="self">Self-employed</option>
-                    <option value="student">Student</option>
-                    <option value="unemployed">Unemployed</option>
-                  </select>
-                </div>
-                <button type="button" class="btn btn-secondary" onclick="prevStep(1)">Previous</button>
-                <button type="button" class="btn btn-primary" onclick="nextStep(3)">Next</button>
               </div>
+            </div>
+          </div>
+        </section>
 
-              <!-- Step 3: Loan Details -->
-              <div class="step" id="step3" style="display:none;">
-                <h2>Step 3: Loan Details</h2>
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="loan-amount" class="form-label">Loan Amount (₦)</label>
-                    <input type="number" class="form-control" id="loan-amount" min="10000" step="1000" placeholder="500000" required>
+        <!-- Apply -->
+        <section data-page="apply" style="display: none">
+          <div class="row">
+            <div class="col-md-8">
+              <form id="applyForm" class="needs-validation" novalidate>
+                <!-- Step 1: Personal Info -->
+                <div class="step" id="step1">
+                  <h2>Step 1: Personal Information</h2>
+                  <div class="mb-3">
+                    <label for="apply-name" class="form-label">Full Name</label>
+                    <input type="text" class="form-control" id="apply-name" required />
+                    <div class="invalid-feedback">Please enter your full name.</div>
                   </div>
-                  <div class="col-md-6 mb-3">
-                    <label for="loan-tenure" class="form-label">Tenure (months)</label>
-                    <select class="form-select" id="loan-tenure">
-                      <option value="6">6</option>
-                      <option value="12" selected>12</option>
-                      <option value="24">24</option>
-                      <option value="36">36</option>
-                      <option value="48">48</option>
+                  <div class="mb-3">
+                    <label for="apply-email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="apply-email" required />
+                    <div class="invalid-feedback">Please enter a valid email.</div>
+                  </div>
+                  <button type="button" class="btn btn-primary" onclick="nextStep(2)">
+                    Next
+                  </button>
+                </div>
+
+                <!-- Step 2: Financial Details -->
+                <div class="step" id="step2" style="display: none">
+                  <h2>Step 2: Financial Details</h2>
+                  <div class="mb-3">
+                    <label for="loan-income" class="form-label">Monthly Net Income (₦)</label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="loan-income"
+                      min="0"
+                      step="100"
+                      placeholder="150000"
+                      required
+                    />
+                    <div class="invalid-feedback">Please enter your income.</div>
+                  </div>
+                  <div class="mb-3">
+                    <label for="loan-employment" class="form-label">Employment Status</label>
+                    <select class="form-select" id="loan-employment">
+                      <option value="employed">Employed</option>
+                      <option value="self">Self-employed</option>
+                      <option value="student">Student</option>
+                      <option value="unemployed">Unemployed</option>
                     </select>
                   </div>
+                  <button type="button" class="btn btn-secondary" onclick="prevStep(1)">
+                    Previous
+                  </button>
+                  <button type="button" class="btn btn-primary" onclick="nextStep(3)">
+                    Next
+                  </button>
                 </div>
-                <div class="mb-3">
-                  <label for="loan-purpose" class="form-label">Purpose</label>
-                  <select class="form-select" id="loan-purpose">
-                    <option value="personal">Personal</option>
-                    <option value="business">Business</option>
-                    <option value="education">Education</option>
-                    <option value="medical">Medical</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <button type="button" class="btn btn-secondary" onclick="prevStep(2)">Previous</button>
-                <button type="button" class="btn btn-primary" onclick="nextStep(4)">Review</button>
-              </div>
 
-              <!-- Step 4: Review & Submit -->
-              <div class="step" id="step4" style="display:none;">
-                <h2>Step 4: Review & Submit</h2>
-                <div id="review-summary"></div>
-                <button type="button" class="btn btn-secondary" onclick="prevStep(3)">Previous</button>
-                <button type="button" class="btn btn-success" onclick="handleApply()">Submit Application</button>
-                <div id="applyError" class="form-text text-danger" style="display:none"></div>
+                <!-- Step 3: Loan Details -->
+                <div class="step" id="step3" style="display: none">
+                  <h2>Step 3: Loan Details</h2>
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label for="loan-amount" class="form-label">Loan Amount (₦)</label>
+                      <input
+                        type="number"
+                        class="form-control"
+                        id="loan-amount"
+                        min="10000"
+                        step="1000"
+                        placeholder="500000"
+                        required
+                      />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label for="loan-tenure" class="form-label">Tenure (months)</label>
+                      <select class="form-select" id="loan-tenure">
+                        <option value="6">6</option>
+                        <option value="12" selected>12</option>
+                        <option value="24">24</option>
+                        <option value="36">36</option>
+                        <option value="48">48</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label for="loan-purpose" class="form-label">Purpose</label>
+                    <select class="form-select" id="loan-purpose">
+                      <option value="personal">Personal</option>
+                      <option value="business">Business</option>
+                      <option value="education">Education</option>
+                      <option value="medical">Medical</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn btn-secondary" onclick="prevStep(2)">
+                    Previous
+                  </button>
+                  <button type="button" class="btn btn-primary" onclick="nextStep(4)">
+                    Review
+                  </button>
+                </div>
+
+                <!-- Step 4: Review & Submit -->
+                <div class="step" id="step4" style="display: none">
+                  <h2>Step 4: Review & Submit</h2>
+                  <div id="review-summary"></div>
+                  <button type="button" class="btn btn-secondary" onclick="prevStep(3)">
+                    Previous
+                  </button>
+                  <button type="button" class="btn btn-success" onclick="handleApply()">
+                    Submit Application
+                  </button>
+                  <div
+                    id="applyError"
+                    class="form-text text-danger"
+                    style="display: none"
+                  ></div>
+                </div>
+              </form>
+            </div>
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Loan Summary</h5>
+                  <p id="quickLoanAmount" class="fs-3">₦0</p>
+                  <p id="quickRepay" class="text-muted">Enter loan amount & tenure</p>
+                  <hr />
+                  <h6 class="card-title">Eligibility</h6>
+                  <p id="quickElig" class="text-muted">Not checked yet</p>
+                </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- My Loans -->
+        <section data-page="status" style="display: none">
+          <h3>My Loan Applications</h3>
+          <p>Track decisions, download receipts, and stay ready for next steps.</p>
+          <div id="myAppsArea" class="list-group"></div>
+        </section>
+
+        <!-- Admin -->
+        <section data-page="admin" style="display: none">
+          <h3>Admin workspace</h3>
+          <p>Review incoming applications, leave notes, and move cases forward.</p>
+          <div id="adminArea" style="display: none">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div id="adminMetrics"></div>
+              <div>
+                <button class="btn btn-outline-secondary" onclick="exportAllCSV()">
+                  Export CSV
+                </button>
+                <button class="btn btn-danger" onclick="handleLogout()">Sign out</button>
+              </div>
+            </div>
+            <div id="adminTableArea"></div>
+          </div>
+        </section>
+
+        <!-- Features -->
+        <section data-page="features" style="display: none">
+          <h2>Features</h2>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Online Loan Application</h5>
+                  <p class="card-text">
+                    Borrowers can easily apply for loans online through a simple multi-step
+                    form.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Real-time Status Updates</h5>
+                  <p class="card-text">
+                    Applicants can track the status of their loan applications in real-time.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Admin Dashboard</h5>
+                  <p class="card-text">
+                    A comprehensive dashboard for admins to manage and review loan
+                    applications.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- FAQs -->
+        <section data-page="faqs" style="display: none">
+          <h2>Frequently Asked Questions</h2>
+          <div class="accordion" id="faqAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingOne">
+                <button
+                  class="accordion-button"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseOne"
+                  aria-expanded="true"
+                  aria-controls="collapseOne"
+                >
+                  How do I apply for a loan?
+                </button>
+              </h2>
+              <div
+                id="collapseOne"
+                class="accordion-collapse collapse show"
+                aria-labelledby="headingOne"
+                data-bs-parent="#faqAccordion"
+              >
+                <div class="accordion-body">
+                  You can apply for a loan by clicking the "Apply" button in the navigation bar
+                  and filling out the multi-step application form.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingTwo">
+                <button
+                  class="accordion-button collapsed"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseTwo"
+                  aria-expanded="false"
+                  aria-controls="collapseTwo"
+                >
+                  What are the required documents?
+                </button>
+              </h2>
+              <div
+                id="collapseTwo"
+                class="accordion-collapse collapse"
+                aria-labelledby="headingTwo"
+                data-bs-parent="#faqAccordion"
+              >
+                <div class="accordion-body">
+                  The required documents may vary depending on the loan type and amount.
+                  However, you will generally need to provide proof of income and identity.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingThree">
+                <button
+                  class="accordion-button collapsed"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseThree"
+                  aria-expanded="false"
+                  aria-controls="collapseThree"
+                >
+                  How long does it take to get a loan approved?
+                </button>
+              </h2>
+              <div
+                id="collapseThree"
+                class="accordion-collapse collapse"
+                aria-labelledby="headingThree"
+                data-bs-parent="#faqAccordion"
+              >
+                <div class="accordion-body">
+                  The approval process is fast and automated. You can get a decision on your
+                  loan application within minutes.
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- About -->
+        <section data-page="about" style="display: none">
+          <h2>About Finverge</h2>
+          <p>
+            An Online Loan Application and Verification System delivered by a multidisciplinary
+            team using a modified Waterfall lifecycle.
+          </p>
+          <h3>Delivery milestones</h3>
+          <p>Our sequential roadmap ensured each component matured before the next began.</p>
+          <ul>
+            <li>Proposal approval, objective definition, and comparative research</li>
+            <li>Systems analysis with use-case and data-flow modelling</li>
+            <li>Front-end implementation of responsive forms and flows</li>
+            <li>Backend services, authentication, and database integration</li>
+            <li>Iterative testing, debugging, and performance tuning</li>
+          </ul>
+          <h3>Team contributions</h3>
+          <p>Each member applied their strengths to deliver the full stack experience.</p>
+          <ul>
+            <li>Afolabi Adebukola Nifemi & Afolabi Olawale Sunday: front-end design and UX</li>
+            <li>
+              Aizebioje David Coker & Abidoye Itunu Oluwaseun: backend logic and data layer
+            </li>
+            <li>
+              Akinsoyinu Oluwatomisin Emmanuel & Adebayo Kehinde Abraham: database
+              implementation and verification
+            </li>
+            <li>Collaborative requirement analysis, diagrams, and validation throughout</li>
+          </ul>
+          <h3>Project summary</h3>
+          <p>
+            Finverge replaces manual loan processing with a secure, transparent web platform.
+            Borrowers register, complete guided applications, and monitor progress from any
+            device. Administrators authenticate, verify eligibility, annotate decisions, and
+            approve or reject requests without leaving the console. The result is reduced
+            paperwork, faster turnaround times, and a shared understanding between institutions
+            and clients.
+          </p>
+          <p>
+            By combining robust engineering practices with thoughtful UX, the system
+            demonstrates how digital lending can be efficient, auditable, and user-friendly.
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <footer class="container py-3 my-4">
+      <ul class="nav justify-content-center border-bottom pb-3 mb-3">
+        <li class="nav-item">
+          <a href="#" class="nav-link px-2 text-muted" onclick="navigateTo('home')">Home</a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link px-2 text-muted" onclick="navigateTo('features')"
+            >Features</a
+          >
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link px-2 text-muted" onclick="navigateTo('faqs')">FAQs</a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link px-2 text-muted" onclick="navigateTo('about')">About</a>
+        </li>
+      </ul>
+      <p class="text-center text-muted">© 2025 Finverge, Inc</p>
+    </footer>
+
+    <div id="globalToast" class="toast-container position-fixed top-0 end-0 p-3">
+      <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+          <strong class="me-auto">Notification</strong>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="toast-body"></div>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      id="appModal"
+      tabindex="-1"
+      aria-labelledby="appModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="appModalLabel">Application Details</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body" id="appModalBody"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      id="loginModal"
+      tabindex="-1"
+      aria-labelledby="loginModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="loginModalLabel">Login Required</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p>You need to be logged in to submit a loan application.</p>
+            <form id="modalLoginForm">
+              <div class="mb-3">
+                <label for="modal-login-email" class="form-label">Email</label>
+                <input
+                  type="email"
+                  class="form-control"
+                  id="modal-login-email"
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="modal-login-password" class="form-label">Password</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  id="modal-login-password"
+                  placeholder="Password"
+                  required
+                />
+              </div>
+              <button type="button" class="btn btn-primary" onclick="handleModalLogin()">
+                Login
+              </button>
+              <div
+                id="modalLoginError"
+                class="form-text text-danger"
+                style="display: none"
+              ></div>
+            </form>
+            <p class="small mt-3">
+              Don't have an account? <a href="#" onclick="navigateTo('register')">Register</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      id="rejectionModal"
+      tabindex="-1"
+      aria-labelledby="rejectionModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="rejectionModalLabel">Rejection Reason</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="rejectionForm">
+              <div class="mb-3">
+                <label for="rejection-reason" class="form-label"
+                  >Please provide a reason for rejecting this application:</label
+                >
+                <textarea class="form-control" id="rejection-reason" rows="3"></textarea>
+              </div>
+              <button type="button" class="btn btn-danger" onclick="handleRejectionSubmit()">
+                Submit Rejection
+              </button>
             </form>
           </div>
-          <div class="col-md-4">
-            <div class="card">
-              <div class="card-body">
-                <h5 class="card-title">Loan Summary</h5>
-                <p id="quickLoanAmount" class="fs-3">₦0</p>
-                <p id="quickRepay" class="text-muted">Enter loan amount & tenure</p>
-                <hr>
-                <h6 class="card-title">Eligibility</h6>
-                <p id="quickElig" class="text-muted">Not checked yet</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- My Loans -->
-      <section data-page="status" style="display:none">
-        <h3>My applications</h3>
-        <p>Track decisions, download receipts, and stay ready for next steps.</p>
-        <div id="myAppsArea" class="list-group"></div>
-      </section>
-
-      <!-- Admin -->
-      <section data-page="admin" style="display:none">
-        <h3>Admin workspace</h3>
-        <p>Review incoming applications, leave notes, and move cases forward.</p>
-        <div id="adminArea" style="display:none">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div id="adminMetrics"></div>
-            <div>
-              <button class="btn btn-outline-secondary" onclick="exportAllCSV()">Export CSV</button>
-              <button class="btn btn-danger" onclick="handleLogout()">Sign out</button>
-            </div>
-          </div>
-          <div id="adminTableArea"></div>
-        </div>
-      </section>
-
-      <!-- Features -->
-      <section data-page="features" style="display:none">
-        <h2>Features</h2>
-        <div class="row">
-          <div class="col-md-4">
-            <div class="card">
-              <div class="card-body">
-                <h5 class="card-title">Online Loan Application</h5>
-                <p class="card-text">Borrowers can easily apply for loans online through a simple multi-step form.</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card">
-              <div class="card-body">
-                <h5 class="card-title">Real-time Status Updates</h5>
-                <p class="card-text">Applicants can track the status of their loan applications in real-time.</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card">
-              <div class="card-body">
-                <h5 class="card-title">Admin Dashboard</h5>
-                <p class="card-text">A comprehensive dashboard for admins to manage and review loan applications.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- FAQs -->
-      <section data-page="faqs" style="display:none">
-        <h2>Frequently Asked Questions</h2>
-        <div class="accordion" id="faqAccordion">
-          <div class="accordion-item">
-            <h2 class="accordion-header" id="headingOne">
-              <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                How do I apply for a loan?
-              </button>
-            </h2>
-            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
-              <div class="accordion-body">
-                You can apply for a loan by clicking the "Apply" button in the navigation bar and filling out the multi-step application form.
-              </div>
-            </div>
-          </div>
-          <div class="accordion-item">
-            <h2 class="accordion-header" id="headingTwo">
-              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                What are the required documents?
-              </button>
-            </h2>
-            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
-              <div class="accordion-body">
-                The required documents may vary depending on the loan type and amount. However, you will generally need to provide proof of income and identity.
-              </div>
-            </div>
-          </div>
-          <div class="accordion-item">
-            <h2 class="accordion-header" id="headingThree">
-              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                How long does it take to get a loan approved?
-              </button>
-            </h2>
-            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
-              <div class="accordion-body">
-                The approval process is fast and automated. You can get a decision on your loan application within minutes.
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- About -->
-      <section data-page="about" style="display:none">
-        <h2>About Finverge</h2>
-        <p>An Online Loan Application and Verification System delivered by a multidisciplinary team using a modified Waterfall lifecycle.</p>
-        <h3>Delivery milestones</h3>
-        <p>Our sequential roadmap ensured each component matured before the next began.</p>
-        <ul>
-          <li>Proposal approval, objective definition, and comparative research</li>
-          <li>Systems analysis with use-case and data-flow modelling</li>
-          <li>Front-end implementation of responsive forms and flows</li>
-          <li>Backend services, authentication, and database integration</li>
-          <li>Iterative testing, debugging, and performance tuning</li>
-        </ul>
-        <h3>Team contributions</h3>
-        <p>Each member applied their strengths to deliver the full stack experience.</p>
-        <ul>
-          <li>Afolabi Adebukola Nifemi & Afolabi Olawale Sunday: front-end design and UX</li>
-          <li>Aizebioje David Coker & Abidoye Itunu Oluwaseun: backend logic and data layer</li>
-          <li>Akinsoyinu Oluwatomisin Emmanuel & Adebayo Kehinde Abraham: database implementation and verification</li>
-          <li>Collaborative requirement analysis, diagrams, and validation throughout</li>
-        </ul>
-        <h3>Project summary</h3>
-        <p>Finverge replaces manual loan processing with a secure, transparent web platform. Borrowers register, complete guided applications, and monitor progress from any device. Administrators authenticate, verify eligibility, annotate decisions, and approve or reject requests without leaving the console. The result is reduced paperwork, faster turnaround times, and a shared understanding between institutions and clients.</p>
-        <p>By combining robust engineering practices with thoughtful UX, the system demonstrates how digital lending can be efficient, auditable, and user-friendly.</p>
-      </section>
-    </div>
-  </main>
-
-  <footer class="container py-3 my-4">
-    <ul class="nav justify-content-center border-bottom pb-3 mb-3">
-      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted" onclick="navigateTo('home')">Home</a></li>
-      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted" onclick="navigateTo('features')">Features</a></li>
-      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted" onclick="navigateTo('faqs')">FAQs</a></li>
-      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted" onclick="navigateTo('about')">About</a></li>
-    </ul>
-    <p class="text-center text-muted">© 2025 Finverge, Inc</p>
-  </footer>
-
-  <div id="globalToast" class="toast-container position-fixed top-0 end-0 p-3">
-    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-      <div class="toast-header">
-        <strong class="me-auto">Notification</strong>
-        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-      </div>
-      <div class="toast-body"></div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="appModal" tabindex="-1" aria-labelledby="appModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="appModalLabel">Application Details</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body" id="appModalBody">
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
-  </div>
 
-  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="loginModalLabel">Login Required</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <p>You need to be logged in to submit a loan application.</p>
-          <form id="modalLoginForm">
-            <div class="mb-3">
-              <label for="modal-login-email" class="form-label">Email</label>
-              <input type="email" class="form-control" id="modal-login-email" placeholder="you@example.com" required>
-            </div>
-            <div class="mb-3">
-              <label for="modal-login-password" class="form-label">Password</label>
-              <input type="password" class="form-control" id="modal-login-password" placeholder="Password" required>
-            </div>
-            <button type="button" class="btn btn-primary" onclick="handleModalLogin()">Login</button>
-            <div id="modalLoginError" class="form-text text-danger" style="display:none"></div>
-          </form>
-          <p class="small mt-3">Don't have an account? <a href="#" onclick="navigateTo('register')">Register</a></p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="rejectionModalLabel">Rejection Reason</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <form id="rejectionForm">
-            <div class="mb-3">
-              <label for="rejection-reason" class="form-label">Please provide a reason for rejecting this application:</label>
-              <textarea class="form-control" id="rejection-reason" rows="3"></textarea>
-            </div>
-            <button type="button" class="btn btn-danger" onclick="handleRejectionSubmit()">Submit Rejection</button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-  <script src="config.js"></script>
-  <script src="app.js" defer></script>
-</body>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
+    <script src="config.js"></script>
+    <script src="app.js" defer></script>
+  </body>
 </html>

@@ -15,6 +15,8 @@ const state = {
   myApplications: [],
   adminApplications: [],
   adminOverview: null,
+  adminFilters: { status: '', search: '' },
+  adminSelectedIds: new Set(),
 };
 
 const $ = (id) => document.getElementById(id);
@@ -107,11 +109,13 @@ function renderUserStatus() {
     if (state.user.role === 'admin') {
       navApply.style.display = 'none';
       navAdmin.style.display = 'block';
-      navStatus.querySelector('.nav-link').textContent = 'My Loans';
-      navStatus.querySelector('.nav-link').setAttribute('onclick', "navigateTo('status')");
+      navStatus.style.display = 'none';
+      navAdmin.querySelector('.nav-link').textContent = 'All Applications';
+      navAdmin.querySelector('.nav-link').setAttribute('onclick', "navigateTo('admin')");
     } else {
       navApply.style.display = 'block';
       navAdmin.style.display = 'none';
+      navStatus.style.display = 'block';
       navStatus.querySelector('.nav-link').textContent = 'My Loans';
       navStatus.querySelector('.nav-link').setAttribute('onclick', "navigateTo('status')");
     }
@@ -175,6 +179,69 @@ async function fetchSession() {
   }
   renderUserStatus();
 }
+
+// -----------------------------
+// Admin helpers: filters, selection, batch
+// -----------------------------
+function setAdminFilter(partial) {
+  state.adminFilters = { ...state.adminFilters, ...partial };
+}
+
+function getAdminQuery() {
+  const params = new URLSearchParams();
+  if (state.adminFilters.status) params.set('status', state.adminFilters.status);
+  if (state.adminFilters.search) params.set('search', state.adminFilters.search);
+  const qs = params.toString();
+  return qs ? `/loans?${qs}` : '/loans';
+}
+
+async function fetchAdminApplications() {
+  const path = getAdminQuery();
+  const { applications } = await apiFetch(path);
+  state.adminApplications = applications || [];
+  const valid = new Set(state.adminApplications.map((a) => String(a.id)));
+  state.adminSelectedIds = new Set(Array.from(state.adminSelectedIds).filter((id) => valid.has(id)));
+}
+
+function isSelected(id) {
+  return state.adminSelectedIds.has(String(id));
+}
+
+function toggleSelect(id, checked) {
+  const key = String(id);
+  if (checked) state.adminSelectedIds.add(key);
+  else state.adminSelectedIds.delete(key);
+  renderAdminTable();
+}
+window.toggleSelect = toggleSelect;
+
+function toggleSelectAll(checked) {
+  if (checked) {
+    state.adminSelectedIds = new Set(state.adminApplications.map((a) => String(a.id)));
+  } else {
+    state.adminSelectedIds.clear();
+  }
+  renderAdminTable();
+}
+window.toggleSelectAll = toggleSelectAll;
+
+async function applyBatch(status) {
+  const ids = Array.from(state.adminSelectedIds);
+  if (!ids.length) return showToast('Select at least one application', 'info');
+  try {
+    await apiFetch('/admin/applications/batch-update', {
+      method: 'PATCH',
+      body: { applicationIds: ids, status },
+    });
+    showToast(`Updated ${ids.length} to ${status}`, 'success');
+    state.adminSelectedIds.clear();
+    await fetchAdminApplications();
+    renderAdminTable();
+  } catch (err) {
+    showToast(err.message || 'Batch update failed', 'error');
+  }
+}
+window.applyBatch = applyBatch;
 
 async function handleRegister() {
   const form = $('registerForm');
@@ -255,6 +322,9 @@ async function handleLogout() {
   }
   setAuthToken(null);
   state.user = null;
+  state.myApplications = [];
+  state.adminApplications = [];
+  state.adminOverview = null;
   renderUserStatus();
   showToast('Signed out.', 'success');
   navigateTo('home');
@@ -478,13 +548,15 @@ function renderMyApps() {
 
 function statusBadge(status) {
   const badgeMap = {
-    Pending: 'warning',
-    Approved: 'success',
-    Rejected: 'danger',
-    'Under Review': 'info',
+    Pending: 'bg-warning',
+    Approved: 'bg-success',
+    Rejected: 'bg-danger',
+    'Under Review': 'bg-info',
   };
-  const badgeClass = badgeMap[status] || 'secondary';
-  return `<span class="badge bg-${badgeClass}">${status}</span>`;
+  const badgeClass = badgeMap[status] || 'bg-secondary';
+  const light = badgeClass === 'bg-warning' || badgeClass === 'bg-info' || badgeClass === 'bg-light';
+  const contrast = light ? ' text-dark' : '';
+  return `<span class="status-badge ${badgeClass}${contrast}">${status}</span>`;
 }
 
 let currentAppId = null;
@@ -605,8 +677,7 @@ async function loadAdminData() {
     console.warn('Overview load failed:', e.message);
   }
   try {
-    const { applications } = await apiFetch('/loans');
-    state.adminApplications = applications || [];
+    await fetchAdminApplications();
     renderAdminTable();
     adminArea.style.display = 'block';
   } catch (err) {
@@ -636,60 +707,129 @@ function renderAdminTable() {
     tableArea.innerHTML = '<div class="alert alert-info">No applications yet.</div>';
     return;
   }
-  const rows = state.adminApplications
-    .slice()
-    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
-    .map((app) => {
-      const reasons = (app.previewReasons || []).map((r) => `<li>${escapeHtml(r)}</li>`).join('');
-      return `
-        <tr>
-          <td>${app.id}</td>
-          <td>
-            <div class="fw-semibold">${escapeHtml(app.userName || '')}</div>
-            <div class="small text-muted">${escapeHtml(app.userEmail || '')}</div>
-          </td>
-          <td>${formatN(app.amount)}</td>
-          <td>${formatN(app.income)}</td>
-          <td>${formatN(app.monthlyEMI)}</td>
-          <td>${app.tenure} mo</td>
-          <td>${escapeHtml(app.purpose)}</td>
-          <td>${escapeHtml(app.employment)}</td>
-          <td>${new Date(app.createdAt).toLocaleDateString()}</td>
-          <td>${statusBadge(app.status)}</td>
-          <td>${reasons ? `<ul class="mb-0 small">${reasons}</ul>` : ''}</td>
-          <td class="text-nowrap">
-            <button class="btn btn-sm btn-outline-primary me-1" onclick="viewApp('${app.id}')">View</button>
-            <button class="btn btn-sm btn-success me-1" onclick="updateAppStatus('${app.id}', 'Approved')">Approve</button>
-            <button class="btn btn-sm btn-danger" onclick="openRejectionModal('${app.id}')">Reject</button>
-          </td>
-        </tr>`;
-    })
-    .join('');
 
+  const sortedApps = state.adminApplications.slice().sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+
+  const rows = sortedApps.map((app) => {
+    const eligText = app.eligiblePreview
+      ? 'Elig: Likely Yes'
+      : `Elig: Likely No${(app.previewReasons && app.previewReasons.length) ? ' — ' + escapeHtml(app.previewReasons[0]) : ''}`;
+    return `
+      <tr>
+        <td class="align-middle text-center" style="width:1%;">
+          <input type="checkbox" class="form-check-input" ${isSelected(app.id) ? 'checked' : ''} onclick="toggleSelect('${app.id}', this.checked)">
+        </td>
+        <td class="cell-start">
+          <div class="fw-semibold">${escapeHtml(app.userName || '')}</div>
+          <div class="small text-muted">${escapeHtml(app.userEmail || '')}</div>
+          <div class="small text-muted">EMI: ${formatN(app.monthlyEMI)} • ${eligText}</div>
+        </td>
+        <td>${formatN(app.amount)}</td>
+        <td>${new Date(app.createdAt).toLocaleDateString()}</td>
+        <td>${statusBadge(app.status)}</td>
+        <td class="text-nowrap cell-end">
+          <button class="btn btn-sm btn-outline-primary btn-icon me-1" onclick="viewApp('${app.id}')" title="View Details"><i class="bi bi-eye"></i></button>
+          <button class="btn btn-sm btn-outline-success btn-icon me-1" onclick="updateAppStatus('${app.id}', 'Approved')" title="Approve"><i class="bi bi-check-lg"></i></button>
+          <button class="btn btn-sm btn-outline-danger btn-icon" onclick="openRejectionModal('${app.id}')" title="Reject"><i class="bi bi-x-lg"></i></button>
+        </td>
+      </tr>`;
+  }).join('');
+
+  const cards = sortedApps.map((app) => {
+    const eligText = app.eligiblePreview ? 'Eligible' : `Not eligible${(app.previewReasons && app.previewReasons.length) ? ': ' + escapeHtml(app.previewReasons[0]) : ''}`;
+    return `
+      <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2">
+            <input type="checkbox" class="form-check-input" ${isSelected(app.id) ? 'checked' : ''} onclick="toggleSelect('${app.id}', this.checked)">
+            <span>${escapeHtml(app.userName || '')}</span>
+          </div>
+          <span class="small text-muted">${new Date(app.createdAt).toLocaleDateString()}</span>
+        </div>
+        <div class="card-body">
+          <h5 class="card-title">${formatN(app.amount)} for ${app.tenure} months</h5>
+          <p class="card-text">
+            <strong>Purpose:</strong> ${escapeHtml(app.purpose)}<br>
+            <strong>Income:</strong> ${formatN(app.income)}<br>
+            <strong>EMI:</strong> ${formatN(app.monthlyEMI)}<br>
+            <span class="text-muted">${eligText}</span>
+          </p>
+          <div>${statusBadge(app.status)}</div>
+        </div>
+        <div class="card-footer d-flex justify-content-end gap-2">
+          <button class="btn btn-sm btn-outline-primary" onclick="viewApp('${app.id}')">View Details</button>
+          <button class="btn btn-sm btn-success" onclick="updateAppStatus('${app.id}', 'Approved')">Approve</button>
+          <button class="btn btn-sm btn-danger" onclick="openRejectionModal('${app.id}')">Reject</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const anySelected = state.adminSelectedIds.size > 0;
+  const allSelected = state.adminApplications.length > 0 && state.adminSelectedIds.size === state.adminApplications.length;
   tableArea.innerHTML = `
-    <div class="table-responsive">
-      <table class="table table-sm align-middle">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Applicant</th>
-            <th>Amount</th>
-            <th>Income</th>
-            <th>EMI</th>
-            <th>Tenure</th>
-            <th>Purpose</th>
-            <th>Employment</th>
-            <th>Submitted</th>
-            <th>Status</th>
-            <th>Eligibility Notes</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
-}
+    <div class="admin-table">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 admin-actions">
+        <div class="d-flex flex-wrap admin-actions">
+          <input id="adminSearch" class="form-control" placeholder="Search name, email, ID" value="${escapeHtml(state.adminFilters.search || '')}" />
+          <select id="adminStatusFilter" class="form-select">
+            <option value="">All statuses</option>
+            <option value="Pending" ${state.adminFilters.status==='Pending'?'selected':''}>Pending</option>
+            <option value="Approved" ${state.adminFilters.status==='Approved'?'selected':''}>Approved</option>
+            <option value="Rejected" ${state.adminFilters.status==='Rejected'?'selected':''}>Rejected</option>
+            <option value="Under Review" ${state.adminFilters.status==='Under Review'?'selected':''}>Under Review</option>
+          </select>
+        </div>
+        <div class="d-flex admin-actions">
+          <button class="btn btn-outline-success" ${anySelected?'':'disabled'} onclick="applyBatch('Approved')"><i class="bi bi-check2"></i> Approve selected</button>
+          <button class="btn btn-outline-danger" ${anySelected?'':'disabled'} onclick="applyBatch('Rejected')"><i class="bi bi-x"></i> Reject selected</button>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th class="text-center" style="width:1%"><input type="checkbox" class="form-check-input" ${allSelected?'checked':''} onclick="toggleSelectAll(this.checked)"></th>
+              <th class="cell-start">Applicant</th>
+              <th>Amount</th>
+              <th>Submitted</th>
+              <th>Status</th>
+              <th class="cell-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="admin-cards">
+      ${cards}
+    </div>
+  `;
 
+  // Bind search + filter events after render
+  const searchEl = $('adminSearch');
+  const statusEl = $('adminStatusFilter');
+  if (searchEl && !searchEl._bound) {
+    let t = null;
+    searchEl.addEventListener('input', () => {
+      clearTimeout(t);
+      t = setTimeout(async () => {
+        setAdminFilter({ search: searchEl.value.trim() });
+        await fetchAdminApplications();
+        renderAdminTable();
+      }, 300);
+    });
+    searchEl._bound = true;
+  }
+  if (statusEl && !statusEl._bound) {
+    statusEl.addEventListener('change', async () => {
+      setAdminFilter({ status: statusEl.value });
+      await fetchAdminApplications();
+      renderAdminTable();
+    });
+    statusEl._bound = true;
+  }
+}
 function exportAllCSV() {
   const items = state.adminApplications || [];
   if (!items.length) return showToast('No applications to export', 'info');

@@ -1,5 +1,4 @@
-/* Add your custom styles here */
-
+/* Custom styles other than the ones from bootstrap. */
 .navbar-brand svg {
   vertical-align: middle;
 }
