@@ -117,7 +117,7 @@ router.get('/:id', requireAuth, (req, res, next) => {
   try {
     const db = getDb();
     const row = db
-      .prepare(`SELECT la.*, u.name AS user_name, u.email AS user_email
+      .prepare(`SELECT la.*, u.name AS user_name, u.email AS user_email, u.phone AS user_phone
                 FROM loan_applications la
                 JOIN users u ON la.user_id = u.id
                 WHERE la.id = ?`)

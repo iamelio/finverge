@@ -15,6 +15,7 @@ function mapLoan(row) {
     userId: row.user_id,
     userName: row.user_name || row.userName,
     userEmail: row.user_email || row.userEmail,
+    userPhone: row.user_phone || row.userPhone,
     amount: row.amount,
     tenure: row.tenure,
     income: row.income,
