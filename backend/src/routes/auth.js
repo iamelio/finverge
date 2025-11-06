@@ -18,19 +18,21 @@ router.post('/register', (req, res, next) => {
     }
     const passwordHash = bcrypt.hashSync(body.password, 10);
     const employment = body.employment || 'unspecified';
+    const role = body.accountType === 'admin' ? 'admin' : 'user';
     const insert = db.prepare(`INSERT INTO users (name, email, phone, employment, password_hash, role)
-                               VALUES (@name, @email, @phone, @employment, @password_hash, 'user')`);
+                               VALUES (@name, @email, @phone, @employment, @password_hash, @role)`);
     const result = insert.run({
       name: body.name,
       email: body.email.toLowerCase(),
       phone: body.phone || null,
       employment,
       password_hash: passwordHash,
+      role,
     });
     const user = db.prepare('SELECT id, name, email, phone, employment, role, created_at FROM users WHERE id = ?').get(result.lastInsertRowid);
     const token = signToken({ id: user.id, role: user.role });
     setAuthCookie(res, token);
-    return res.status(201).json({ user });
+    return res.status(201).json({ user, token });
   } catch (err) {
     return next(err);
   }
@@ -57,7 +59,7 @@ router.post('/login', (req, res, next) => {
     const token = signToken({ id: user.id, role: user.role });
     setAuthCookie(res, token);
     delete user.password_hash;
-    return res.json({ user });
+    return res.json({ user, token });
   } catch (err) {
     return next(err);
   }

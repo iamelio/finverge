@@ -13,9 +13,11 @@ test('parseOrThrow returns validated registration payload', () => {
     email: 'jane@example.com',
     password: 'strongpass123',
     phone: '+2348000000000',
+    accountType: 'admin',
   };
   const result = parseOrThrow(registerSchema, data);
   assert.equal(result.email, data.email);
+  assert.equal(result.accountType, 'admin');
 });
 
 test('parseOrThrow throws on invalid registration', () => {

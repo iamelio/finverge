@@ -5,6 +5,21 @@ const { getDb } = require('../db');
 const COOKIE_NAME = 'loan_session';
 const sameSite = config.env === 'production' ? 'strict' : 'lax';
 
+function extractToken(req) {
+  const cookieToken = req.cookies[COOKIE_NAME];
+  if (cookieToken) {
+    return cookieToken;
+  }
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+  if (authHeader && typeof authHeader === 'string') {
+    const parts = authHeader.trim().split(' ');
+    if (parts.length === 2 && /^bearer$/i.test(parts[0])) {
+      return parts[1];
+    }
+  }
+  return null;
+}
+
 function signToken(payload) {
   return jwt.sign(payload, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
 }
@@ -28,7 +43,7 @@ function clearAuthCookie(res) {
 }
 
 function attachUser(req, _res, next) {
-  const token = req.cookies[COOKIE_NAME];
+  const token = extractToken(req);
   if (!token) {
     req.user = null;
     return next();
@@ -68,5 +83,6 @@ module.exports = {
   attachUser,
   requireAuth,
   requireAdmin,
+  extractToken,
   COOKIE_NAME,
 };

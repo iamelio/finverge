@@ -11,6 +11,7 @@ const registerSchema = z.object({
     .optional()
     .or(z.literal('').transform(() => undefined)),
   password: z.string().min(8).max(128),
+  accountType: z.enum(['user', 'admin']).optional(),
 });
 
 const loginSchema = z.object({
