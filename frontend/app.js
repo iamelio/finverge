@@ -5,7 +5,7 @@
    - Modal experience for deep loan reviews
 ------------------------------------------------------- */
 
-const API_BASE = window.API_BASE_URL || 'http://localhost:4000/api';
+const API_BASE = window.API_BASE_URL;
 const TOKEN_STORAGE_KEY = 'loan_app_token_v1';
 const LAST_TAB_KEY = 'loan_app_last_tab';
 
