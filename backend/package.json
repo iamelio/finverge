@@ -4,6 +4,9 @@
   "description": "Online Loan Application and Verification System backend",
   "main": "src/server.js",
   "type": "commonjs",
+  "engines": {
+    "node": "24"
+  },
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
@@ -15,7 +18,7 @@
     "better-sqlite3": "^12.4.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
+    "dotenv": "^17.2.3",
     "express": "^4.19.2",
     "express-rate-limit": "^6.11.2",
     "helmet": "^7.0.0",
