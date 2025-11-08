@@ -765,6 +765,9 @@
       integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
       crossorigin="anonymous"
     ></script>
+    <!-- Optional runtime env injection: define window.ENV.API_BASE_URL in env.js -->
+    <script>window.ENV = window.ENV || {};</script>
+    <script src="env.js"></script>
     <script src="config.js"></script>
     <script src="app.js" defer></script>
   </body>
